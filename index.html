@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#14253b">
+<title>JFT | Warehouse Time Clock</title>
+<style>
+:root{--navy:#17283f;--ink:#1b2b40;--muted:#6a778b;--line:#e2e9f0;--bg:#f4f7fb;--green:#16845b;--red:#be4c4c;--blue:#2563eb}
+*[hidden]{display:none!important}*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;color:var(--ink)}.wrap{max-width:1040px;margin:auto;padding:28px 22px 60px}
+.header{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:28px}.logo{font-weight:850;letter-spacing:.07em;font-size:24px;color:var(--navy)}.sublogo{color:var(--muted);font-weight:550;font-size:13px;letter-spacing:.09em;margin-top:5px}.tag{background:white;border:1px solid var(--line);border-radius:100px;padding:8px 14px;color:var(--muted);font-size:12px;white-space:nowrap}
+.tabs{display:flex;gap:6px;background:#e9eef4;border-radius:12px;padding:5px;width:max-content;margin:0 0 22px}.tab{border:none;border-radius:9px;padding:12px 20px;font-weight:700;color:#596d83;background:transparent;cursor:pointer;font-size:15px}.tab.active{background:white;color:var(--navy);box-shadow:0 2px 6px #22334411}
+.panel{background:white;border:1px solid var(--line);border-radius:22px;box-shadow:0 10px 34px #14253b0a;overflow:hidden}.kiosk{padding:36px 44px}.eyebrow{color:#7c8ba0;letter-spacing:.14em;font-weight:750;font-size:12px;text-transform:uppercase}.clock{text-align:center;padding:15px 0 30px;border-bottom:1px solid var(--line);margin-bottom:28px}.clocktime{font-size:clamp(48px,8vw,82px);font-weight:850;font-variant-numeric:tabular-nums;letter-spacing:-.055em;line-height:1.22;color:var(--navy)}.clockdate{font-size:17px;color:var(--muted);margin-top:8px}
+.field{margin:0 0 20px}.field label{display:block;font-size:14px;font-weight:750;margin-bottom:9px}.form-control{width:100%;padding:15px 17px;background:#fbfcfe;border:1.5px solid #d9e3ec;border-radius:12px;color:var(--ink);font-size:18px;outline:none}.form-control:focus{border-color:#4b88d5;box-shadow:0 0 0 3px #4b88d51b}.form-control::placeholder{color:#98a5b3}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px}.bigbtn{border:0;border-radius:15px;padding:23px 18px;color:white;font-size:22px;font-weight:800;cursor:pointer;transition:transform .12s,opacity .12s}.bigbtn:active{transform:scale(.99)}.bigbtn:disabled,.button:disabled{opacity:.55;cursor:wait}.in{background:var(--green)}.out{background:var(--navy)}.bigbtn small{display:block;font-size:13px;opacity:.83;margin-top:7px;font-weight:600}
+.hint{margin-top:25px;color:#8290a2;font-size:12px;text-align:center}.notice{display:none;padding:15px 17px;border-radius:12px;margin:22px 0 0;font-size:15px;font-weight:650;line-height:1.5}.notice.good{display:block;background:#e9f7ef;color:#136f4c}.notice.bad{display:block;background:#fff0ef;color:#ae3939}.notice.info{display:block;background:#ecf3ff;color:#2a5da2}
+.admin{padding:30px 34px}.sectiontitle{font-size:22px;font-weight:850;letter-spacing:-.02em;margin:0 0 8px}.sectionhint{color:var(--muted);font-size:14px;margin:0 0 22px;line-height:1.5}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.button{border:0;border-radius:10px;padding:12px 16px;background:var(--navy);color:white;cursor:pointer;font-weight:750;font-size:14px}.button.secondary{background:#edf2f7;color:#283a4e}.button.danger{background:#fff1f1;color:#a33333}.button.green{background:var(--green)}.button.small{padding:8px 10px;font-size:12px}.adminnav{display:flex;gap:10px;margin:16px 0 26px;border-bottom:1px solid var(--line);padding-bottom:15px}.adminnav .button.selected{background:var(--navy);color:white}.inlinefields{display:grid;grid-template-columns:1.6fr 1fr auto;gap:12px;align-items:end}.inlinefields .field{margin-bottom:0}.field .form-control.compact{font-size:15px;padding:12px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin-top:16px}table{border-collapse:collapse;width:100%;min-width:580px}th{text-align:left;color:#748194;background:#f8fafc;font-size:12px;letter-spacing:.04em}td,th{padding:14px 14px;border-bottom:1px solid #ebeff5}td{font-size:14px}tr:last-child td{border-bottom:0}.muted{color:var(--muted)}.pill{display:inline-block;padding:4px 9px;border-radius:30px;background:#ecf7f0;color:#167a55;font-size:12px;font-weight:700}.pill.off{background:#f3f4f6;color:#737d88}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-top:20px}.stat{border-radius:12px;border:1px solid var(--line);padding:18px;background:#f9fbfd}.stat .num{font-size:29px;font-weight:850;letter-spacing:-.035em}.stat .name{font-size:12px;color:var(--muted);margin-top:5px}.divider{margin:26px 0;border:0;border-top:1px solid var(--line)}.footnote{font-size:12px;color:#8593a4;margin-top:14px}.spinner{opacity:.5}
+@media(max-width:680px){.wrap{padding:15px 12px 40px}.header{margin-bottom:20px}.logo{font-size:18px}.sublogo{font-size:10px}.tag{display:none}.kiosk{padding:26px 20px}.clock{padding:10px 0 22px;margin-bottom:22px}.clockdate{font-size:15px}.bigbtn{font-size:19px;padding:21px 9px}.buttons{gap:10px}.admin{padding:22px 18px}.inlinefields{grid-template-columns:1fr}.inlinefields .button{width:100%}.stats{gap:6px}.stat{padding:13px 8px}.stat .num{font-size:23px}.tab{padding:10px 14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="header"><div><div class="logo">JFT FOOD DISTRIBUTION</div><div class="sublogo">WAREHOUSE TIME CLOCK · HALIFAX</div></div><div class="tag">Nova Scotia · Atlantic Time</div></header>
+<div class="tabs"><button id="tabKiosk" class="tab active" type="button">员工打卡 · Clock In / Out</button><button id="tabAdmin" class="tab" type="button">管理员 · Admin</button></div>
+<section id="kioskPanel" class="panel kiosk">
+  <div class="clock"><div class="eyebrow">Current time · Halifax</div><div id="clockTime" class="clocktime">--:--:--</div><div id="clockDate" class="clockdate">—</div></div>
+  <div class="field"><label for="staff">1. 选择员工 / Select Employee</label><select id="staff" class="form-control"><option value="">正在加载员工名单…</option></select></div>
+  <div class="field"><label for="staffPin">2. 输入个人 PIN / Employee PIN</label><input type="password" id="staffPin" inputmode="numeric" autocomplete="off" maxlength="6" class="form-control" placeholder="4–6 digit PIN"></div>
+  <div class="buttons"><button type="button" id="checkIn" class="bigbtn in">CHECK IN<small>上班签到</small></button><button type="button" id="checkOut" class="bigbtn out">CHECK OUT<small>下班签退</small></button></div>
+  <div id="kioskMsg" class="notice" role="status" aria-live="polite"></div>
+  <div class="hint">打卡时间以服务器记录为准，关闭电脑不会删除已保存的记录。</div>
+</section>
+<section id="adminPanel" class="panel admin" hidden>
+  <div id="adminLogin"><h2 class="sectiontitle">管理员登录</h2><p class="sectionhint">添加员工、查看打卡明细和导出 Excel 可用的 CSV 文件。</p>
+   <div class="field" style="max-width:410px"><label for="adminPin">管理员密码 / Admin PIN</label><input id="adminPin" type="password" inputmode="numeric" autocomplete="off" class="form-control" placeholder="8–12 digit admin PIN"></div>
+   <button class="button" type="button" id="adminEnter">进入后台 · Login</button></div>
+  <div id="adminMain" hidden>
+   <div class="row" style="justify-content:space-between"><div><h2 class="sectiontitle">考勤管理</h2><p class="sectionhint" style="margin-bottom:0">Warehouse Attendance Dashboard</p></div><button type="button" id="logout" class="button secondary">退出管理</button></div>
+   <div class="adminnav"><button class="button secondary selected" id="showReports" type="button">考勤记录</button><button class="button secondary" id="showStaff" type="button">员工管理</button><button class="button secondary" id="showSecurity" type="button">安全设置</button></div>
+   <div id="reportSection">
+    <div class="row"><div class="field" style="margin:0"><label for="dateFrom">开始日期</label><input id="dateFrom" type="date" class="form-control compact"></div><div class="field" style="margin:0"><label for="dateTo">结束日期</label><input id="dateTo" type="date" class="form-control compact"></div><div style="align-self:end" class="row"><button id="loadReport" class="button" type="button">查询</button><button id="exportCsv" class="button secondary" type="button">导出 CSV</button></div></div>
+    <div class="stats"><div class="stat"><div id="statShift" class="num">0</div><div class="name">打卡班次</div></div><div class="stat"><div id="statHours" class="num">0.0</div><div class="name">已完成工时</div></div><div class="stat"><div id="statOpen" class="num">0</div><div class="name">未签退 / 异常</div></div></div>
+    <div class="tablewrap"><table><thead><tr><th>员工</th><th>日期</th><th>Check In</th><th>Check Out</th><th>工作时长</th></tr></thead><tbody id="reportRows"><tr><td colspan="5" class="muted">选择日期并点击查询</td></tr></tbody></table></div>
+    <div class="footnote">工时按上下班打卡间隔计算，未自动扣除午休；未签退记录不计入已完成工时。正式核算工资前请复核异常记录。</div>
+   </div>
+   <div id="staffSection" hidden>
+    <h3 style="margin:0 0 15px">新增员工</h3>
+    <div class="inlinefields"><div class="field"><label for="newName">员工姓名 / Name</label><input id="newName" class="form-control compact" maxlength="60" placeholder="例如：Kevin"></div><div class="field"><label for="newPin">个人 PIN（4–6 位）</label><input id="newPin" class="form-control compact" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="例如：2468"></div><button type="button" id="addStaff" class="button green">添加员工</button></div>
+    <div class="tablewrap"><table><thead><tr><th>员工</th><th>状态</th><th>操作</th></tr></thead><tbody id="staffRows"></tbody></table></div>
+    <div class="footnote">员工 PIN 不会在后台显示。忘记 PIN 时可以直接重置。停用员工不会删除历史打卡记录。</div>
+   </div>
+   <div id="securitySection" hidden>
+    <h3 style="margin:0 0 12px">修改管理员密码</h3><p class="sectionhint">建议首次登录后修改默认管理员密码，并妥善保存。</p>
+    <div class="field" style="max-width:370px"><label for="newAdminCode">新密码（8–12 位数字）</label><input id="newAdminCode" class="form-control compact" type="password" inputmode="numeric" autocomplete="off" maxlength="12"></div>
+    <button id="changeAdminCode" class="button" type="button">保存新密码</button>
+   </div>
+   <div id="adminMsg" class="notice" role="status"></div>
+  </div>
+</section>
+</div>
+<script>
+(function(){
+'use strict';
+const URL_BASE='https://oiytsycjzshksuoyjqxd.supabase.co/rest/v1/rpc/';
+const KEY="sb_publishable_V3QLeH_4-Pkiy6KASeKJtA_ASTXe2gy";
+const $=id=>document.getElementById(id);
+let adminCode='', reportRows=[], staffRows=[], lastAdminUse=0;
+const fmtTime=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Halifax',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+const fmtDate=new Intl.DateTimeFormat('zh-CN',{timeZone:'America/Halifax',year:'numeric',month:'long',day:'numeric',weekday:'long'});
+const fmtShortTime=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Halifax',hour:'2-digit',minute:'2-digit',hour12:false});
+const fmtShortDate=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Halifax',year:'numeric',month:'2-digit',day:'2-digit'});
+function tick(){const now=new Date();$('clockTime').textContent=fmtTime.format(now);$('clockDate').textContent=fmtDate.format(now)}
+tick();setInterval(tick,1000);
+function esc(s){return String(s===null||s===undefined?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function showMsg(where,msg,kind){const el=$(where);el.className='notice '+(kind||'info');el.textContent=msg}
+function hideMsg(where){$(where).className='notice';$(where).textContent=''}
+async function rpc(name,obj){
+ const response=await fetch(URL_BASE+encodeURIComponent(name),{method:'POST',headers:{'apikey':KEY,'Content-Type':'application/json'},body:JSON.stringify(obj||{}),cache:'no-store'});
+ let data=null;try{data=await response.json()}catch(err){throw Error('服务器响应无效，请稍后重试')}
+ if(!response.ok){throw Error((data&&data.message)||'请求未完成，请检查网络')}
+ return data;
+}
+async function loadStaff(){
+ const data=await rpc('jft_timeclock_staff_list',{});
+ const previous=$('staff').value;
+ $('staff').innerHTML='<option value="">— 请选择员工 —</option>'+data.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join('');
+ if(data.some(s=>s.id===previous))$('staff').value=previous;
+ if(!data.length)$('staff').innerHTML='<option value="">请管理员先添加员工</option>';
+}
+async function punch(action){
+ hideMsg('kioskMsg');const id=$('staff').value,pin=$('staffPin').value.trim();
+ if(!id||!/^[0-9]{4,6}$/.test(pin)){showMsg('kioskMsg','请先选择员工并输入 4–6 位个人 PIN','bad');return}
+ const buttons=[$('checkIn'),$('checkOut')];buttons.forEach(b=>b.disabled=true);
+ try{
+  const r=await rpc('jft_timeclock_punch',{p_staff_id:id,p_pin:pin,p_action:action});
+  if(!r.ok){showMsg('kioskMsg',r.message||'打卡未成功','bad');return}
+  const when=fmtTime.format(new Date(r.at));
+  showMsg('kioskMsg',r.name+' · '+(action==='in'?'CHECK IN 上班签到':'CHECK OUT 下班签退')+' 成功！服务器时间 '+when+(r.warning?'。'+r.warning:''),'good');
+ }catch(e){showMsg('kioskMsg','打卡未完成：'+e.message,'bad')}
+ finally{$('staffPin').value='';buttons.forEach(b=>b.disabled=false)}
+}
+$('checkIn').onclick=()=>punch('in');$('checkOut').onclick=()=>punch('out');
+$('staffPin').addEventListener('keydown',e=>{if(e.key==='Enter')punch('in')});
+function setTab(admin){$('tabKiosk').classList.toggle('active',!admin);$('tabAdmin').classList.toggle('active',admin);$('kioskPanel').hidden=admin;$('adminPanel').hidden=!admin;}
+$('tabKiosk').onclick=()=>setTab(false);$('tabAdmin').onclick=()=>setTab(true);
+function loggedOut(){adminCode='';$('adminPin').value='';$('adminLogin').hidden=false;$('adminMain').hidden=true;hideMsg('adminMsg')}
+$('logout').onclick=loggedOut;
+$('adminEnter').onclick=async()=>{
+ const code=$('adminPin').value.trim();if(!/^[0-9]{8,12}$/.test(code)){alert('请输入 8–12 位管理员密码');return}
+ $('adminEnter').disabled=true;
+ try{
+  if(!await rpc('jft_timeclock_admin_login',{p_code:code}))throw Error('管理员密码不正确');
+  adminCode=code;lastAdminUse=Date.now();$('adminPin').value='';$('adminLogin').hidden=true;$('adminMain').hidden=false;
+  await openAdmin('reports');
+ }catch(e){alert(e.message);loggedOut()}finally{$('adminEnter').disabled=false}
+};
+$('adminPin').addEventListener('keydown',e=>{if(e.key==='Enter')$('adminEnter').click()});
+setInterval(()=>{if(adminCode&&Date.now()-lastAdminUse>15*60*1000){loggedOut();alert('管理员页面因闲置15分钟已退出')}} ,30000);
+function auth(){if(!adminCode)throw Error('请重新登录管理员');lastAdminUse=Date.now();return adminCode}
+async function openAdmin(section){
+ hideMsg('adminMsg');
+ $('reportSection').hidden=section!=='reports';$('staffSection').hidden=section!=='staff';$('securitySection').hidden=section!=='security';
+ ['Reports','Staff','Security'].forEach(x=>$('show'+x).classList.toggle('selected',x.toLowerCase()===section));
+ if(section==='reports')await loadReport();if(section==='staff')await loadAdminStaff();
+}
+$('showReports').onclick=()=>openAdmin('reports');$('showStaff').onclick=()=>openAdmin('staff');$('showSecurity').onclick=()=>openAdmin('security');
+function localIso(d){const p=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Halifax',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d);const get=t=>p.find(x=>x.type===t).value;return get('year')+'-'+get('month')+'-'+get('day')}
+const now=new Date();$('dateTo').value=localIso(now);$('dateFrom').value=localIso(new Date(now.getTime()-6*86400000));
+function hours(min){return (min/60).toFixed(2)}
+async function loadReport(){
+ const from=$('dateFrom').value,to=$('dateTo').value;
+ if(!from||!to){showMsg('adminMsg','请选择开始和结束日期','bad');return}
+ $('loadReport').disabled=true;
+ try{
+  reportRows=await rpc('jft_timeclock_admin_report',{p_code:auth(),p_from:from,p_to:to});
+  const done=reportRows.filter(r=>r.minutes!==null&&r.minutes!==undefined);
+  $('statShift').textContent=reportRows.length;
+  $('statHours').textContent=hours(done.reduce((n,r)=>n+r.minutes,0));
+  $('statOpen').textContent=reportRows.length-done.length;
+  $('reportRows').innerHTML=reportRows.length?reportRows.map(r=>{
+   const a=new Date(r.check_in);return '<tr><td><b>'+esc(r.name)+'</b></td><td>'+esc(fmtShortDate.format(a))+'</td><td>'+esc(fmtShortTime.format(a))+'</td><td>'+ (r.check_out?esc(fmtShortTime.format(new Date(r.check_out))):'<span style="color:#c44848">未签退</span>') +'</td><td>'+(r.minutes==null?'—':hours(r.minutes)+' h')+'</td></tr>';
+  }).join(''):'<tr><td colspan="5" class="muted">该日期范围内暂无打卡记录</td></tr>';
+ }catch(e){showMsg('adminMsg','读取记录失败：'+e.message,'bad')}
+ finally{$('loadReport').disabled=false}
+}
+$('loadReport').onclick=loadReport;
+function safeCsv(val){let s=String(val==null?'':val);if(/^[=+\-@]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
+$('exportCsv').onclick=()=>{
+ if(!reportRows.length){showMsg('adminMsg','当前没有可导出的记录，请先查询','info');return}
+ const lines=[['员工','上班日期','Check In','Check Out','工时(小时)','状态']];
+ reportRows.forEach(r=>lines.push([r.name,fmtShortDate.format(new Date(r.check_in)),fmtShortTime.format(new Date(r.check_in)),r.check_out?fmtShortTime.format(new Date(r.check_out)):'',r.minutes==null?'':hours(r.minutes),r.minutes==null?'未签退':'完成']));
+ const csv='\ufeff'+lines.map(line=>line.map(safeCsv).join(',')).join('\r\n');
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');a.href=url;a.download='JFT_Attendance_'+$('dateFrom').value+'_to_'+$('dateTo').value+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+async function loadAdminStaff(){
+ try{
+  staffRows=await rpc('jft_timeclock_admin_staff',{p_code:auth()});
+  $('staffRows').innerHTML=staffRows.length?staffRows.map(s=>'<tr><td><b>'+esc(s.name)+'</b></td><td><span class="pill '+(s.active?'':'off')+'">'+(s.active?'在职':'已停用')+'</span></td><td><div class="row"><button class="button small secondary" data-reset="'+esc(s.id)+'">重置 PIN</button><button class="button small '+(s.active?'danger':'secondary')+'" data-toggle="'+esc(s.id)+'">'+(s.active?'停用':'启用')+'</button></div></td></tr>').join(''):'<tr><td colspan="3" class="muted">尚未添加员工</td></tr>';
+ }catch(e){showMsg('adminMsg','读取员工失败：'+e.message,'bad')}
+}
+$('addStaff').onclick=async()=>{
+ const name=$('newName').value.trim(),pin=$('newPin').value.trim();
+ if(!name||!/^[0-9]{4,6}$/.test(pin)){showMsg('adminMsg','填写姓名及4–6位员工PIN','bad');return}
+ $('addStaff').disabled=true;
+ try{await rpc('jft_timeclock_admin_add',{p_code:auth(),p_name:name,p_pin:pin});
+ $('newName').value='';$('newPin').value='';await Promise.all([loadAdminStaff(),loadStaff()]);showMsg('adminMsg','员工已添加，可以开始打卡','good')
+ }catch(e){showMsg('adminMsg',e.message,'bad')}finally{$('addStaff').disabled=false}
+};
+$('staffRows').onclick=async e=>{
+ const btn=e.target.closest('button');if(!btn)return;
+ const id=btn.dataset.reset||btn.dataset.toggle;const s=staffRows.find(x=>x.id===id);if(!s)return;
+ try{
+  if(btn.dataset.reset){
+   const pin=prompt('请输入 '+s.name+' 的新 PIN（4–6 位数字）');if(pin===null)return;
+   if(!/^[0-9]{4,6}$/.test(pin)){alert('PIN 必须为4–6位数字');return}
+   await rpc('jft_timeclock_admin_reset_pin',{p_code:auth(),p_staff_id:id,p_pin:pin});showMsg('adminMsg','已重置 '+s.name+' 的 PIN','good');
+  }else{
+   if(!confirm('确定要'+(s.active?'停用':'启用')+'员工 '+s.name+' 吗？'))return;
+   await rpc('jft_timeclock_admin_toggle',{p_code:auth(),p_staff_id:id,p_active:!s.active});
+   await Promise.all([loadAdminStaff(),loadStaff()]);showMsg('adminMsg','员工状态已更新','good');
+  }
+ }catch(err){showMsg('adminMsg',err.message,'bad')}
+};
+$('changeAdminCode').onclick=async()=>{
+ const newCode=$('newAdminCode').value.trim();if(!/^[0-9]{8,12}$/.test(newCode)){showMsg('adminMsg','新密码须为8–12位数字','bad');return}
+ if(!confirm('确定修改管理员密码吗？请先保存新密码。'))return;
+ try{await rpc('jft_timeclock_admin_change_code',{p_code:auth(),p_new_code:newCode});$('newAdminCode').value='';loggedOut();alert('管理员密码已修改，请使用新密码重新登录')}
+ catch(e){showMsg('adminMsg',e.message,'bad')}
+};
+loadStaff().catch(e=>showMsg('kioskMsg','无法加载员工名单：'+e.message,'bad'));
+})();
+</script>
+</body></html>
