@@ -67,7 +67,7 @@ function filterBy(f){filter=f;renderList();}
 function renderList(){
  if(!state)return;var q=$('search').value.trim();
  var ls=state.items.map(x=>({it:x,score:rankItem(x,q)})).filter(x=>x.score>=0&&(filter==='all'||(filter==='done'?!!getCount(x.it.id):!getCount(x.it.id))));
- if(q)ls.sort((a,b)=>b.score-a.score||a.it.id-b.it.id);
+ if(q)ls.sort((a,b)=>b.score-a.score||(a.it.source_order||a.it.id)-(b.it.source_order||b.it.id));
  $('itemTotal').textContent=ls.length+' / '+state.items.length;
  $('itemList').innerHTML=ls.map(x=>{var it=x.it,c=getCount(it.id),p=getPhotos(it.id),stamp=c?(c.zero?'<span class="stamp zero">0 库存</span>':'<span class="stamp done">已盘'+(p.length?' 📷':'')+'</span>'):'<span class="stamp">未盘</span>';
  return '<button class="entry '+(Number(current)===Number(it.id)?'active':'')+'" onclick="showItem('+it.id+')"><span><strong>'+esc(it.name)+'</strong><small>'+esc(it.pack+' / '+it.unit)+'</small></span>'+stamp+'</button>'}).join('')||'<p class="muted small">没有匹配项，请换一个关键词</p>';
@@ -80,7 +80,7 @@ function showItem(id){
  if(!it){$('editor').innerHTML='<p>没有选中商品</p>';return;}
  var fmt=(x)=>x===null||x===undefined?'':String(x);
  $('editor').innerHTML=
- '<div class="headrow"><span class="pill">商品 #'+esc(it.id)+'</span><span class="tiny muted">'+(c?'✓ 已保存':'○ 尚未盘点')+'</span></div>'+
+ '<div class="headrow"><span class="pill">表格第 '+esc(it.source_order||it.id)+' 行</span><span class="tiny muted">'+(c?'✓ 已保存':'○ 尚未盘点')+'</span></div>'+
  '<div class="cardtitle">'+esc(it.name)+'</div><div class="desc">Packing Style: <b>'+esc(it.pack||'—')+'</b>　单位: <b>'+esc(it.unit||'CS')+'</b></div>'+
  (ro?'<div class="alert">该轮盘点是历史记录，只能查看与导出。</div>':'')+
  '<div class="flex"><b>等级或批次与最终数量</b><span class="tiny muted">可填 No.1 / No.2 或批次；数量填最终总数</span></div>'+
@@ -147,7 +147,7 @@ function exportExcel(){
  var rows=[['Date',b.count_date,'Rep',b.rep],['等级或批次','数量','等级或批次','数量','Item','Packing Style','Unit']];
  var detail=[['Row','Item','Packing Style','Unit','Grade / Batch 1','No.1 Qty','No.1 Unit','Grade / Batch 2','No.2 Qty','No.2 Unit','Status','Photo Count','Note','Date','Rep']];
  state.items.forEach(it=>{var c=getCount(it.id),p=getPhotos(it.id);rows.push([c?c.grade1:'',qtyLabel(c,1),c?c.grade2:'',qtyLabel(c,2),it.name,it.pack,it.unit]);
- detail.push([it.id,it.name,it.pack,it.unit,c?c.grade1:'',c?Number(c.qty1):0,c?c.unit1:it.unit,c?c.grade2:'',c?Number(c.qty2):0,c?c.unit2:it.unit,c?(c.zero?'Confirmed Zero':'Counted'):'NOT COUNTED (exported 0)',p.length,c?c.note:'',b.count_date,b.rep]);});
+ detail.push([it.source_order||it.id,it.name,it.pack,it.unit,c?c.grade1:'',c?Number(c.qty1):0,c?c.unit1:it.unit,c?c.grade2:'',c?Number(c.qty2):0,c?c.unit2:it.unit,c?(c.zero?'Confirmed Zero':'Counted'):'NOT COUNTED (exported 0)',p.length,c?c.note:'',b.count_date,b.rep]);});
  var name='JFT_Fresh_Inventory_'+b.count_date+'_'+b.rep.replace(/[^a-zA-Z0-9_-]/g,'_');
  if(window.XLSX){var wb=XLSX.utils.book_new(),sh=XLSX.utils.aoa_to_sheet(rows),det=XLSX.utils.aoa_to_sheet(detail);sh['!cols']=[{wch:18},{wch:16},{wch:18},{wch:16},{wch:44},{wch:23},{wch:11}];det['!cols']=[{wch:8},{wch:44},{wch:20},{wch:10},{wch:16},{wch:12},{wch:12},{wch:15},{wch:12},{wch:12},{wch:28},{wch:14},{wch:42},{wch:14},{wch:13}];XLSX.utils.book_append_sheet(wb,sh,'蔬菜库存表');XLSX.utils.book_append_sheet(wb,det,'盘点明细');XLSX.writeFile(wb,name+'.xlsx');notify('Excel 已导出');}
  else{var csv=rows.map(row=>row.map(v=>'"'+String(v===null?'':v).replace(/"/g,'""')+'"').join(',')).join('\r\n');downloadBlob(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),name+'.csv');notify('Excel 组件未加载，已导出兼容 Excel 的 CSV');}
