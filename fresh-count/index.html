@@ -6,7 +6,7 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head><body><div class="top"><div class="topin"><div class="brand">JFT <span>Food Distribution</span> <span class="tiny muted">· Fresh Count</span></div><div class="right"><span id="headerInfo" class="tiny muted">独立盘点 · 不写回联合出单表</span><button id="changePinBtn" class="outline hidden" style="padding:7px 11px" onclick="changePin()">修改口令</button><button id="logout" class="outline hidden" style="padding:7px 11px" onclick="logout()">退出</button></div></div></div>
 <div id="login" class="page"><div class="panel login"><h2>🥬 蔬菜库存盘点</h2><p class="muted small">逐项盘点 · 拍照留档 · Excel / 12项每页 PDF</p><label>仓库访问口令</label><input id="pin" type="password" placeholder="输入仓库口令" autocomplete="off"><button class="primary" style="width:100%;margin-top:12px" onclick="login()">进入盘点系统</button><div id="loginError" class="alert hidden" style="margin-top:12px"></div></div></div>
-<div id="app" class="page hidden"><div class="panel" style="margin-bottom:14px"><div class="headrow"><div><b id="sessionTitle">当前盘点</b><div class="muted tiny" id="sessionSub"></div></div><div class="right"><select id="batchHistory" class="hist" onchange="chooseHistory(this.value)"></select><button class="outline" onclick="reloadState()">刷新</button><button class="outline" onclick="startBatch(true)">新一轮</button></div></div><div id="startPanel" class="hidden" style="margin-top:12px"><label>盘点人 Rep</label><input id="rep" placeholder="例如：Hu"><button class="primary" style="margin-top:9px;width:100%" onclick="startBatch(false)">开始第一轮盘点</button></div><div id="stats" class="counter"></div><div class="bar"><div id="progress" style="width:0"></div></div><div class="actions" style="margin-top:12px"><button class="primary" onclick="exportPDF()">📷 导出 12项/页 PDF</button><button class="outline" onclick="exportExcel()">📊 导出 Excel</button></div></div><div class="layout"><div class="panel"><div class="headrow"><b>商品清单</b><span class="muted tiny" id="itemTotal"></span></div><input id="search" placeholder="🔎 模糊搜索名称、品牌、中文、规格" style="margin-top:11px" oninput="renderList()"><div class="right" style="margin-top:8px"><button class="outline small" style="padding:8px" onclick="filterBy('all')">全部</button><button class="outline small" style="padding:8px" onclick="filterBy('todo')">未盘</button><button class="outline small" style="padding:8px" onclick="filterBy('done')">已盘</button></div><div class="list" id="itemList"></div></div><div class="panel" id="editor"><div class="muted">请选择商品开始盘点。</div></div></div><div class="tiny muted" style="margin:15px 3px">照片仅保存在私有空间。未盘商品导出为 0，但在盘点明细中明确标记「未盘」，与确认无货区分。</div></div>
+<div id="app" class="page hidden"><div class="panel" style="margin-bottom:14px"><div class="headrow"><div><b id="sessionTitle">当前盘点</b><div class="muted tiny" id="sessionSub"></div></div><div class="right"><select id="batchHistory" class="hist" onchange="chooseHistory(this.value)"></select><button class="outline" onclick="reloadState()">刷新</button><button class="outline" onclick="startBatch(true)">新一轮</button></div></div><div id="startPanel" class="hidden" style="margin-top:12px"><label>盘点人 Rep</label><input id="rep" placeholder="例如：Hu"><button class="primary" style="margin-top:9px;width:100%" onclick="startBatch(false)">开始第一轮盘点</button></div><div id="stats" class="counter"></div><div class="bar"><div id="progress" style="width:0"></div></div><div class="actions" style="margin-top:12px"><button class="primary" onclick="exportPDF()">📷 汇总＋照片 PDF</button><button class="outline" onclick="exportTablePDF()">📄 仅表格 PDF</button><button class="outline" onclick="exportExcel()">📊 导出 Excel</button></div></div><div class="layout"><div class="panel"><div class="headrow"><b>商品清单</b><span class="muted tiny" id="itemTotal"></span></div><input id="search" placeholder="🔎 模糊搜索名称、品牌、中文、规格" style="margin-top:11px" oninput="renderList()"><div class="right" style="margin-top:8px"><button class="outline small" style="padding:8px" onclick="filterBy('all')">全部</button><button class="outline small" style="padding:8px" onclick="filterBy('todo')">未盘</button><button class="outline small" style="padding:8px" onclick="filterBy('done')">已盘</button></div><div class="list" id="itemList"></div></div><div class="panel" id="editor"><div class="muted">请选择商品开始盘点。</div></div></div><div class="tiny muted" style="margin:15px 3px">照片仅保存在私有空间。未盘商品导出为 0，但在盘点明细中明确标记「未盘」，与确认无货区分。</div></div>
 <div id="toast" class="msg hidden"></div><input id="camera" type="file" accept="image/*" capture="environment" class="hidden" onchange="pickedPhoto(this)"><input id="gallery" type="file" accept="image/*" class="hidden" onchange="pickedPhoto(this)">
 <script>
 'use strict';
@@ -240,7 +240,7 @@ async function pdfLoadImage(id){
   im.src=u;
  });
 }
-async function pdfRasterPage(items,index,total){
+async function pdfRasterPage(items,index,total,summaryPages,allPages){
  var W=816,H=1056,mult=1.6;
  var canvas=document.createElement('canvas');
  canvas.width=Math.round(W*mult);canvas.height=Math.round(H*mult);
@@ -304,7 +304,7 @@ async function pdfRasterPage(items,index,total){
  }
  ctx.fillStyle='#476955';ctx.font='11px Arial, sans-serif';
  ctx.fillText('Total: '+state.items.length+'  |  Counted: '+state.counts.length+'  |  Not counted: '+(state.items.length-state.counts.length),27,1042);
- ctx.textAlign='right';ctx.font='bold 11px Arial, sans-serif';ctx.fillText('Page '+(index+1)+' / '+total,789,1042);ctx.textAlign='left';
+ ctx.textAlign='right';ctx.font='bold 11px Arial, sans-serif';ctx.fillText('Page '+((summaryPages||0)+index+1)+' / '+(allPages||total),789,1042);ctx.textAlign='left';
  var blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('无法生成 PDF 页面')),'image/jpeg',.78));
  canvas.width=1;canvas.height=1;
  return {bytes:new Uint8Array(await blob.arrayBuffer()),width:Math.round(W*mult),height:Math.round(H*mult),failed};
@@ -330,26 +330,92 @@ function pdfAssemble(images){
  put('trailer\n<< /Size '+(last+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF\n');
  return new Blob(parts,{type:'application/pdf'});
 }
-async function exportPDF(){
+
+/* Warehouse-friendly paper inventory: compact summary before 12-item/photo pages. */
+async function pdfTablePage(rows,index,total){
+ const W=816,H=1056,mult=1.6,canvas=document.createElement('canvas');
+ canvas.width=Math.round(W*mult);canvas.height=Math.round(H*mult);
+ const ctx=canvas.getContext('2d',{alpha:false});
+ if(!ctx)throw Error('设备不支持 PDF 画布');
+ ctx.scale(canvas.width/W,canvas.height/H);
+ ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+ ctx.textAlign='left';ctx.fillStyle='#086a47';ctx.font='bold 25px Arial, sans-serif';
+ ctx.fillText('JFT FOOD DISTRIBUTION',26,43);
+ ctx.fillStyle='#263e30';ctx.font='bold 15px Arial, "PingFang SC", sans-serif';
+ ctx.fillText('Fresh Inventory  /  等级或批次库存汇总（无照片）',26,68);
+ ctx.textAlign='right';ctx.font='12px Arial, sans-serif';
+ ctx.fillText('Date: '+state.batch.count_date,790,42);
+ ctx.fillText('Rep: '+state.batch.rep,790,61);ctx.textAlign='left';
+ ctx.fillStyle='#0b7048';ctx.fillRect(26,91,764,4);
+ const starts=[26,275,374,443,542,611,710], widths=[249,99,69,99,69,99,80];
+ const heads=['Item / 品名','等级或批次1','数量1','等级或批次2','数量2','等级或批次3','数量3'];
+ const top=108,headH=37,rowH=25;
+ ctx.fillStyle='#0d5c3e';ctx.fillRect(26,top,764,headH);
+ heads.forEach((hd,i)=>{
+  ctx.font='bold 12px Arial, "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle='#ffffff';
+  ctx.fillText(pdfFit(ctx,hd,widths[i]-7),starts[i]+5,top+23);
+ });
+ for(let r=0;r<rows.length;r++){
+  const item=rows[r],c=getCount(item.id),y=top+headH+r*rowH;
+  const qty=c?[1,2,3].map(k=>Number(c['qty'+k]||0)):[0,0,0];
+  const confirmed=c&&c.zero;
+  ctx.fillStyle=r%2?'#f6faf7':'#ffffff';
+  if(!c)ctx.fillStyle='#f4f4f4';
+  else if(confirmed)ctx.fillStyle='#fff5ed';
+  ctx.fillRect(26,y,764,rowH);
+  ctx.strokeStyle='#e1eae4';ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(26,y+rowH);ctx.lineTo(790,y+rowH);ctx.stroke();
+  const itemName=item.name+(c?'':' [未盘]');
+  ctx.font='bold 11.4px Arial, "PingFang SC","Microsoft YaHei",sans-serif';ctx.fillStyle='#173629';
+  ctx.fillText(pdfFit(ctx,itemName,widths[0]-9),starts[0]+4,y+16);
+  for(let k=1;k<=3;k++){
+   const pos=1+(k-1)*2;
+   const grade=c&&qty[k-1]>0?(c['grade'+k]||'—'):'';
+   const amount=(!c&&k===1)?'0':(c&&qty[k-1]>0)?String(qty[k-1])+' '+(c['unit'+k]||item.unit||'CS'):(confirmed&&k===1?'0':(c&&qty.every(n=>n===0)&&k===1?'0':''));
+   ctx.font='11px Arial, "PingFang SC","Microsoft YaHei",sans-serif';ctx.fillStyle='#334a3c';
+   ctx.fillText(pdfFit(ctx,grade,widths[pos]-8),starts[pos]+4,y+16);
+   ctx.font='bold 11px Arial, sans-serif';ctx.fillStyle='#103f2b';
+   ctx.fillText(pdfFit(ctx,amount,widths[pos+1]-7),starts[pos+1]+4,y+16);
+  }
+ }
+ ctx.strokeStyle='#c6d9cd';ctx.lineWidth=1;ctx.strokeRect(26,top,764,headH+rows.length*rowH);
+ ctx.fillStyle='#506e5b';ctx.font='11px Arial, "PingFang SC",sans-serif';
+ ctx.fillText('Items: '+state.items.length+'  |  Counted: '+state.counts.length+'  |  Uncounted: '+(state.items.length-state.counts.length)+'  |  Orange = confirmed zero',26,1040);
+ ctx.textAlign='right';ctx.font='bold 11px Arial,sans-serif';
+ ctx.fillText('Page '+(index+1)+' / '+total,790,1040);ctx.textAlign='left';
+ const blob=await new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(Error('无法生成表格页')),'image/jpeg',.82));
+ const data=new Uint8Array(await blob.arrayBuffer());
+ canvas.width=1;canvas.height=1;
+ return {bytes:data,width:Math.round(W*mult),height:Math.round(H*mult),failed:0};
+}
+async function exportInventoryPDF(tableOnly){
  if(busy||!checkExport())return;
- var pages=[];
+ const pages=[],summaryChunks=[],photoChunks=[];
+ for(let i=0;i<state.items.length;i+=34)summaryChunks.push(state.items.slice(i,i+34));
+ if(!tableOnly)for(let i=0;i<state.items.length;i+=12)photoChunks.push(state.items.slice(i,i+12));
+ const total=summaryChunks.length+photoChunks.length;
  try{
-  setBusy(true);
-  var chunks=[];for(var i=0;i<state.items.length;i+=12)chunks.push(state.items.slice(i,i+12));
-  notify('PDF 正在生成：0 / '+chunks.length+' 页（无需外部插件）');
-  var missingPhotos=0;
-  for(var p=0;p<chunks.length;p++){
-   var page=await pdfRasterPage(chunks[p],p,chunks.length);
-   missingPhotos+=page.failed;pages.push(page);
-   notify('PDF 正在生成：'+(p+1)+' / '+chunks.length+' 页');
+  setBusy(true);let missingPhotos=0;
+  notify('PDF 正在生成：0 / '+total+' 页');
+  for(let p=0;p<summaryChunks.length;p++){
+   pages.push(await pdfTablePage(summaryChunks[p],p,total));
+   notify('PDF 正在生成：'+pages.length+' / '+total+' 页');
    await new Promise(r=>setTimeout(r,0));
   }
-  var pdf=pdfAssemble(pages);
-  downloadBlob(pdf,'JFT_Fresh_Photo_Report_'+state.batch.count_date+'.pdf');
-  notify('PDF 已导出：'+chunks.length+' 页'+(missingPhotos?'；有 '+missingPhotos+' 张照片读取失败，请检查报告':''));
+  for(let p=0;p<photoChunks.length;p++){
+   const pg=await pdfRasterPage(photoChunks[p],p,photoChunks.length,summaryChunks.length,total);
+   missingPhotos+=pg.failed;pages.push(pg);
+   notify('PDF 正在生成：'+pages.length+' / '+total+' 页');
+   await new Promise(r=>setTimeout(r,0));
+  }
+  const pdf=pdfAssemble(pages);
+  downloadBlob(pdf,'JFT_Fresh_'+(tableOnly?'Table':'Summary_and_Photos')+'_'+state.batch.count_date+'.pdf');
+  notify('PDF 已导出：'+total+' 页'+(missingPhotos?'；有 '+missingPhotos+' 张照片读取失败':''));
  }catch(e){notify('PDF 导出失败：'+e.message);console.error('JFT PDF export',e);}
  finally{pages.length=0;setBusy(false);}
 }
+async function exportPDF(){return exportInventoryPDF(false);}
+async function exportTablePDF(){return exportInventoryPDF(true);}
 
 (function(){var p=sessionStorage.getItem('jft_fresh_pin');if(p){cred=p;loadState().then(()=>{$('login').classList.add('hidden');$('app').classList.remove('hidden');$('logout').classList.remove('hidden');$('changePinBtn').classList.remove('hidden');}).catch(()=>{sessionStorage.removeItem('jft_fresh_pin');cred='';});}document.getElementById('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login();});})();
 </script></body></html>
