@@ -83,9 +83,9 @@ function showItem(id){
  '<div class="headrow"><span class="pill">商品 #'+esc(it.id)+'</span><span class="tiny muted">'+(c?'✓ 已保存':'○ 尚未盘点')+'</span></div>'+
  '<div class="cardtitle">'+esc(it.name)+'</div><div class="desc">Packing Style: <b>'+esc(it.pack||'—')+'</b>　单位: <b>'+esc(it.unit||'CS')+'</b></div>'+
  (ro?'<div class="alert">该轮盘点是历史记录，只能查看与导出。</div>':'')+
- '<div class="flex"><b>等级与最终数量</b><span class="tiny muted">同商品多箱只填最终总数</span></div>'+
- '<div class="inputrow" style="margin-top:11px"><div><label>No.1 等级</label><input id="g1" value="'+esc(c?c.grade1:'No.1')+'" '+(ro?'disabled':'')+'></div><div><label>数量</label><input id="q1" inputmode="decimal" type="number" step=".001" min="0" value="'+esc(c?fmt(c.qty1):'')+'" '+(ro?'disabled':'')+'></div><div><label>单位</label><input id="u1" value="'+esc(c?c.unit1:it.unit)+'" '+(ro?'disabled':'')+'></div></div>'+
- '<div class="inputrow" style="margin-top:11px"><div><label>第2种等级</label><input id="g2" value="'+esc(c?c.grade2:'No.2')+'" '+(ro?'disabled':'')+'></div><div><label>数量</label><input id="q2" inputmode="decimal" type="number" step=".001" min="0" placeholder="可不填" value="'+esc(c&&Number(c.qty2)>0?fmt(c.qty2):'')+'" '+(ro?'disabled':'')+'></div><div><label>单位</label><input id="u2" value="'+esc(c?c.unit2:it.unit)+'" '+(ro?'disabled':'')+'></div></div>'+
+ '<div class="flex"><b>等级或批次与最终数量</b><span class="tiny muted">可填 No.1 / No.2 或批次；数量填最终总数</span></div>'+
+ '<div class="inputrow" style="margin-top:11px"><div><label>等级或批次 1</label><input id="g1" value="'+esc(c?c.grade1:'No.1')+'" '+(ro?'disabled':'')+'></div><div><label>数量</label><input id="q1" inputmode="decimal" type="number" step=".001" min="0" value="'+esc(c?fmt(c.qty1):'')+'" '+(ro?'disabled':'')+'></div><div><label>单位</label><input id="u1" value="'+esc(c?c.unit1:it.unit)+'" '+(ro?'disabled':'')+'></div></div>'+
+ '<div class="inputrow" style="margin-top:11px"><div><label>等级或批次 2</label><input id="g2" value="'+esc(c?c.grade2:'No.2')+'" '+(ro?'disabled':'')+'></div><div><label>数量</label><input id="q2" inputmode="decimal" type="number" step=".001" min="0" placeholder="可不填" value="'+esc(c&&Number(c.qty2)>0?fmt(c.qty2):'')+'" '+(ro?'disabled':'')+'></div><div><label>单位</label><input id="u2" value="'+esc(c?c.unit2:it.unit)+'" '+(ro?'disabled':'')+'></div></div>'+
  '<div class="note"><label>备注（可选）</label><input id="note" maxlength="600" placeholder="箱体状态、品相、批次……" value="'+esc(c?c.note:'')+'" '+(ro?'disabled':'')+'></div>'+
  '<div class="foto"><div class="camera">📷</div><b>当前商品照片</b><p class="muted tiny" style="margin:5px 0">有库存至少 1 张，最多 3 张；自动压缩上传</p>'+
  (ro?'':'<div class="links"><button class="outline" onclick="openCamera()">拍照</button><button class="outline" onclick="$(\'gallery\').click()">从相册选择</button></div>')+
@@ -144,8 +144,8 @@ function checkExport(){
 function qtyLabel(c,k){return c?String(Number(c['qty'+k]||0))+String(c['unit'+k]||''):'0';}
 function exportExcel(){
  if(!checkExport())return;var b=state.batch;
- var rows=[['Date',b.count_date,'Rep',b.rep],['等级','数量','等级','数量','Item','Packing Style','Unit']];
- var detail=[['Row','Item','Packing Style','Unit','No.1 Grade','No.1 Qty','No.1 Unit','No.2 Grade','No.2 Qty','No.2 Unit','Status','Photo Count','Note','Date','Rep']];
+ var rows=[['Date',b.count_date,'Rep',b.rep],['等级或批次','数量','等级或批次','数量','Item','Packing Style','Unit']];
+ var detail=[['Row','Item','Packing Style','Unit','Grade / Batch 1','No.1 Qty','No.1 Unit','Grade / Batch 2','No.2 Qty','No.2 Unit','Status','Photo Count','Note','Date','Rep']];
  state.items.forEach(it=>{var c=getCount(it.id),p=getPhotos(it.id);rows.push([c?c.grade1:'',qtyLabel(c,1),c?c.grade2:'',qtyLabel(c,2),it.name,it.pack,it.unit]);
  detail.push([it.id,it.name,it.pack,it.unit,c?c.grade1:'',c?Number(c.qty1):0,c?c.unit1:it.unit,c?c.grade2:'',c?Number(c.qty2):0,c?c.unit2:it.unit,c?(c.zero?'Confirmed Zero':'Counted'):'NOT COUNTED (exported 0)',p.length,c?c.note:'',b.count_date,b.rep]);});
  var name='JFT_Fresh_Inventory_'+b.count_date+'_'+b.rep.replace(/[^a-zA-Z0-9_-]/g,'_');
