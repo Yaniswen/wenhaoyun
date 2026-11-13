@@ -1,0 +1,198 @@
+
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="theme-color" content="#084d36"><title>JFT Fresh Count · 鲜货盘点</title>
+<style>
+:root{--green:#086a47;--deep:#084d36;--bg:#f2f5f3;--ink:#122820;--line:#d6e2db;--muted:#668075;--soft:#e9f5ed}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:15px}button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:11px;padding:12px 16px;background:#e4eee7;color:#17543d;font-weight:700}button:disabled{opacity:.55;cursor:wait}.primary{background:var(--green);color:#fff}.warn{background:#fff0e5;color:#8d4200}.danger{background:#ffebea;color:#a52a26}.outline{border:1px solid #bfd1c5;background:#fff}.muted{color:var(--muted)}.tiny{font-size:12px}.small{font-size:13px}input,select,textarea{width:100%;border:1px solid #c5d5cb;background:#fff;border-radius:10px;padding:12px;color:var(--ink)}label{font-size:13px;font-weight:700;display:block;margin-bottom:6px}.page{max-width:1240px;margin:auto;padding:18px}.top{background:#fff;border-bottom:1px solid var(--line)}.topin{max-width:1240px;margin:auto;padding:13px 18px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.brand{font-weight:900;font-size:20px;letter-spacing:-.5px;color:var(--deep)}.brand span{color:#8aa44c}.meta{display:flex;gap:8px;flex-wrap:wrap}.pill{background:#e5f1eb;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700}.layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:18px;align-items:start}.panel{background:#fff;border:1px solid var(--line);border-radius:17px;padding:17px;box-shadow:0 4px 16px rgba(4,42,22,.035)}.headrow{display:flex;gap:9px;align-items:center;justify-content:space-between;flex-wrap:wrap}.list{max-height:72vh;overflow-y:auto;margin-top:9px}.entry{display:flex;align-items:center;justify-content:space-between;gap:9px;width:100%;text-align:left;background:#fff;border-bottom:1px solid #e8eee9;border-radius:6px;padding:10px 8px}.entry.active{background:#e7f4eb}.entry strong{display:block;font-size:13px;overflow-wrap:anywhere}.entry small{color:var(--muted);display:block}.stamp{white-space:nowrap;font-size:11px;color:#fff;background:#959f9a;border-radius:20px;padding:3px 7px}.stamp.done{background:#0a8355}.stamp.zero{background:#b36b32}.cardtitle{font-size:24px;line-height:1.24;font-weight:850;overflow-wrap:anywhere;margin:7px 0}.desc{color:#617569;font-size:14px;margin-bottom:15px}.inputrow{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,.7fr);gap:10px}.actions{display:flex;gap:9px;flex-wrap:wrap}.actions>*{flex:1}.foto{border:2px dashed #bfd3c5;border-radius:12px;background:#f8fbf9;padding:18px;text-align:center;margin:16px 0}.foto .camera{font-size:30px}.foto .links{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}.foto button{font-size:13px}.thumbnails{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}.thumb{width:126px}.thumb img{width:126px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}.thumb button{font-size:11px;padding:6px;width:100%}.counter{display:flex;gap:9px;flex-wrap:wrap;margin:9px 0}.stat{padding:10px;background:#f1f7f2;border-radius:10px;flex:1;text-align:center;min-width:80px}.stat b{font-size:23px;display:block}.bar{background:#e7ede8;border-radius:20px;height:9px;overflow:hidden}.bar div{height:100%;background:#14875c;transition:width .2s}.alert{padding:11px 13px;background:#fff1e5;color:#995000;border-radius:10px;font-size:13px}.msg{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#173a2b;color:white;padding:12px 20px;border-radius:10px;z-index:200;box-shadow:0 5px 30px #0003;max-width:95vw}.login{max-width:430px;margin:9vh auto}.hidden{display:none!important}.right{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.hist{max-width:210px;padding:8px;font-size:12px}.divider{height:1px;background:var(--line);margin:14px 0}.flex{display:flex;gap:8px;align-items:center;justify-content:space-between}.note{margin-top:12px}.photo-label{font-size:12px;color:#516f59;margin:4px 0}.desktopOnly{display:block}@media(max-width:820px){.page{padding:10px}.layout{display:flex;flex-direction:column}.panel{width:100%;padding:14px}.list{max-height:200px}.cardtitle{font-size:22px}.desktopOnly{display:none}.topin{padding:11px}.inputrow{grid-template-columns:1.1fr .8fr .7fr}.hist{max-width:160px}}
+</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+</head><body><div class="top"><div class="topin"><div class="brand">JFT <span>Food Distribution</span> <span class="tiny muted">· Fresh Count</span></div><div class="right"><span id="headerInfo" class="tiny muted">独立盘点 · 不写回联合出单表</span><button id="changePinBtn" class="outline hidden" style="padding:7px 11px" onclick="changePin()">修改口令</button><button id="logout" class="outline hidden" style="padding:7px 11px" onclick="logout()">退出</button></div></div></div>
+<div id="login" class="page"><div class="panel login"><h2>🥬 蔬菜库存盘点</h2><p class="muted small">逐项盘点 · 拍照留档 · Excel / 12项每页 PDF</p><label>仓库访问口令</label><input id="pin" type="password" placeholder="输入仓库口令" autocomplete="off"><button class="primary" style="width:100%;margin-top:12px" onclick="login()">进入盘点系统</button><div id="loginError" class="alert hidden" style="margin-top:12px"></div></div></div>
+<div id="app" class="page hidden"><div class="panel" style="margin-bottom:14px"><div class="headrow"><div><b id="sessionTitle">当前盘点</b><div class="muted tiny" id="sessionSub"></div></div><div class="right"><select id="batchHistory" class="hist" onchange="chooseHistory(this.value)"></select><button class="outline" onclick="reloadState()">刷新</button><button class="outline" onclick="startBatch(true)">新一轮</button></div></div><div id="startPanel" class="hidden" style="margin-top:12px"><label>盘点人 Rep</label><input id="rep" placeholder="例如：Hu"><button class="primary" style="margin-top:9px;width:100%" onclick="startBatch(false)">开始第一轮盘点</button></div><div id="stats" class="counter"></div><div class="bar"><div id="progress" style="width:0"></div></div><div class="actions" style="margin-top:12px"><button class="primary" onclick="exportPDF()">📷 导出 12项/页 PDF</button><button class="outline" onclick="exportExcel()">📊 导出 Excel</button></div></div><div class="layout"><div class="panel"><div class="headrow"><b>商品清单</b><span class="muted tiny" id="itemTotal"></span></div><input id="search" placeholder="🔎 模糊搜索名称、品牌、中文、规格" style="margin-top:11px" oninput="renderList()"><div class="right" style="margin-top:8px"><button class="outline small" style="padding:8px" onclick="filterBy('all')">全部</button><button class="outline small" style="padding:8px" onclick="filterBy('todo')">未盘</button><button class="outline small" style="padding:8px" onclick="filterBy('done')">已盘</button></div><div class="list" id="itemList"></div></div><div class="panel" id="editor"><div class="muted">请选择商品开始盘点。</div></div></div><div class="tiny muted" style="margin:15px 3px">照片仅保存在私有空间。未盘商品导出为 0，但在盘点明细中明确标记「未盘」，与确认无货区分。</div></div>
+<div id="toast" class="msg hidden"></div><input id="camera" type="file" accept="image/*" capture="environment" class="hidden" onchange="pickedPhoto(this)"><input id="gallery" type="file" accept="image/*" class="hidden" onchange="pickedPhoto(this)">
+<script>
+'use strict';
+const API_BASE='https://oiytsycjzshksuoyjqxd.supabase.co/functions/v1/jft-fresh-count';
+var state=null,current=null,cred='',filter='all',queuedFile=null,queuedPreview='',thumbUrls={},busy=false;
+var $=id=>document.getElementById(id);
+function esc(v){return String(v===null||v===undefined?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function notify(s){var x=$('toast');x.textContent=s;x.classList.remove('hidden');setTimeout(()=>x.classList.add('hidden'),3900);}
+function setBusy(v){busy=v;document.querySelectorAll('button').forEach(b=>b.disabled=v);}
+async function api(action,body,method){
+ var opts={method:method||'POST',headers:{'X-JFT-Pin':cred}};
+ if(body instanceof FormData){opts.body=body;}
+ else if(opts.method==='POST'){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body||{});}
+ var aparts=action.split('&');var r=await fetch(API_BASE+'?action='+encodeURIComponent(aparts[0])+(aparts.length>1?'&'+aparts.slice(1).join('&'):''),opts);
+ var type=r.headers.get('Content-Type')||'';
+ var v=type.includes('application/json')?await r.json():await r.text();
+ if(!r.ok)throw Error(v&&v.error?v.error:'网络请求失败：'+r.status);
+ return v;
+}
+async function login(){
+ cred=$('pin').value.trim();$('loginError').classList.add('hidden');if(!cred)return notify('请输入口令');
+ try{setBusy(true);await loadState();sessionStorage.setItem('jft_fresh_pin',cred);$('login').classList.add('hidden');$('app').classList.remove('hidden');$('logout').classList.remove('hidden');$('changePinBtn').classList.remove('hidden');}catch(e){$('loginError').textContent=e.message;$('loginError').classList.remove('hidden');}finally{setBusy(false);}
+}
+async function changePin(){var n=prompt('请输入新的仓库口令（至少 12 个字符）');if(n===null)return;if(n.length<12)return notify('口令至少 12 个字符');var n2=prompt('再次输入新口令以确认');if(n!==n2)return notify('两次输入不一致');try{setBusy(true);await api('change-pin',{newPin:n});cred=n;sessionStorage.setItem('jft_fresh_pin',n);notify('新口令已生效');}catch(e){notify(e.message);}finally{setBusy(false);}}
+function logout(){sessionStorage.removeItem('jft_fresh_pin');cred='';state=null;document.querySelectorAll('.thumb img').forEach(i=>i.src='');$('app').classList.add('hidden');$('login').classList.remove('hidden');$('logout').classList.add('hidden');$('changePinBtn').classList.add('hidden');$('pin').value='';}
+async function loadState(batch){state=await api('state'+(batch?'&batch='+encodeURIComponent(batch):''),null,'GET');render();}
+async function reloadState(){try{setBusy(true);await loadState(state&&state.batch?state.batch.id:null);notify('数据已刷新');}catch(e){notify(e.message);}finally{setBusy(false);}}
+function getCount(id){return (state.counts||[]).find(c=>Number(c.item_id)===Number(id));}
+function getPhotos(id){return (state.photos||[]).filter(p=>Number(p.item_id)===Number(id));}
+function readOnly(){return !state.batch||state.batch.status!=='active';}
+function render(){
+ var b=state.batch,done=state.counts.length,total=state.items.length,z=state.counts.filter(c=>c.zero).length,p=state.photos.length;
+ $('sessionTitle').textContent=b?'盘点：'+b.count_date:'尚未开始盘点';
+ $('sessionSub').textContent=b?('Rep: '+b.rep+' · '+(b.status==='active'?'进行中':'历史记录 / 只读')):'先创建一轮盘点，之后就能保存数量及照片';
+ $('headerInfo').textContent=b?b.count_date+' · '+b.rep:'独立盘点 · 不修改原表';
+ $('stats').innerHTML='<div class="stat"><b>'+done+'</b><span class="tiny muted">已盘</span></div><div class="stat"><b>'+(total-done)+'</b><span class="tiny muted">未盘</span></div><div class="stat"><b>'+z+'</b><span class="tiny muted">确认无货</span></div><div class="stat"><b>'+p+'</b><span class="tiny muted">照片数</span></div>';
+ $('progress').style.width=(total?Math.round(done/total*100):0)+'%';
+ $('startPanel').classList.toggle('hidden',!!b);
+ var hs=state.history||[],val=b?b.id:'';
+ $('batchHistory').innerHTML='<option value="">当前进行中 / 最新</option>'+hs.map(x=>'<option value="'+esc(x.id)+'" '+(x.id===val?'selected':'')+'>'+esc(x.count_date+' '+x.rep+' '+(x.status==='active'?'●进行中':'✓历史'))+'</option>').join('');
+ renderList();
+ if(b){if(!state.items.some(x=>Number(x.id)===Number(current)))current=(state.items.find(x=>!getCount(x.id))||state.items[0]||{}).id;showItem(current);}
+ else{$('editor').innerHTML='<h3>开始盘点</h3><p>点击上方「开始第一轮盘点」，填写 Rep，再选择商品。</p>';}
+}
+function norm(s){return String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[\s\-_\/().]/g,'');}
+function distance(a,b){if(Math.abs(a.length-b.length)>3||a.length>25||b.length>25)return 99;var v=Array.from({length:b.length+1},(_,i)=>i);for(var i=1;i<=a.length;i++){var prev=v[0];v[0]=i;for(var j=1;j<=b.length;j++){var t=v[j];v[j]=Math.min(v[j]+1,v[j-1]+1,prev+(a[i-1]===b[j-1]?0:1));prev=t;}}return v[b.length];}
+var aliasMap=[['牛油果','avocado'],['青椒','greenpepper'],['红椒','redpepper'],['黄椒','yellowpepper'],['黄瓜','cucumber'],['西兰花','broccoli'],['花菜','cauliflower'],['菜花','cauliflower'],['生菜','lettuce,romaine,iceberg,greenleaf'],['洋葱','onion'],['大葱','greenonion'],['青葱','greenonion'],['蘑菇','mushroom'],['白菇','whitemushroom'],['金针菇','enokimushroom'],['胡萝卜','carrot'],['白萝卜','radish'],['白菜','nappa,bokchoy,cabbage'],['芹菜','celery'],['番茄','tomato'],['西红柿','tomato'],['辣椒','pepper,chili,habanero,jalapeno'],['蒜','garlic'],['姜','ginger'],['香菜','cilantro,coriander'],['九层塔','basil'],['罗勒','basil'],['菠菜','spinach'],['豆芽','beansprout'],['豆角','bean'],['土豆','potato'],['红薯','yam,sweetpotato'],['茄子','eggplant'],['韭菜','chive'],['芥兰','chinesebroccoli'],['莴笋','achoy'],['荷兰豆','snowpea'],['高丽菜','cabbage'],['油麦菜','achoy'],['玉米','corn'],['黄心菜','choysum']];
+function rankItem(it,query){
+ var s=norm(it.name+' '+it.pack+' '+it.unit),q=norm(query);if(!q)return 1;if(s.includes(q))return 500-q.length;
+ for(var z of aliasMap){if(q===norm(z[0])||q.includes(norm(z[0]))){if(z[1].split(',').some(a=>s.includes(norm(a))))return 400;}}
+ var chunks=(it.name+' '+it.pack).toLowerCase().split(/[\s/_().]+/);
+ var best=99;for(var w of chunks){var t=norm(w);if(t.startsWith(q))return 300;if(q.length>=4)best=Math.min(best,distance(t,q));}
+ return q.length>=4&&best<=2?120-best*10:-1;
+}
+function filterBy(f){filter=f;renderList();}
+function renderList(){
+ if(!state)return;var q=$('search').value.trim();
+ var ls=state.items.map(x=>({it:x,score:rankItem(x,q)})).filter(x=>x.score>=0&&(filter==='all'||(filter==='done'?!!getCount(x.it.id):!getCount(x.it.id))));
+ if(q)ls.sort((a,b)=>b.score-a.score||a.it.id-b.it.id);
+ $('itemTotal').textContent=ls.length+' / '+state.items.length;
+ $('itemList').innerHTML=ls.map(x=>{var it=x.it,c=getCount(it.id),p=getPhotos(it.id),stamp=c?(c.zero?'<span class="stamp zero">0 库存</span>':'<span class="stamp done">已盘'+(p.length?' 📷':'')+'</span>'):'<span class="stamp">未盘</span>';
+ return '<button class="entry '+(Number(current)===Number(it.id)?'active':'')+'" onclick="showItem('+it.id+')"><span><strong>'+esc(it.name)+'</strong><small>'+esc(it.pack+' / '+it.unit)+'</small></span>'+stamp+'</button>'}).join('')||'<p class="muted small">没有匹配项，请换一个关键词</p>';
+}
+function nextUncounted(){var all=state.items;var i=all.findIndex(x=>Number(x.id)===Number(current));return all.slice(i+1).concat(all.slice(0,i+1)).find(x=>!getCount(x.id));}
+function selectedValue(id,def){var el=$(id);return el?el.value:def;}
+function showItem(id){
+ current=id;queuedFile=null;if(queuedPreview){URL.revokeObjectURL(queuedPreview);queuedPreview='';}
+ var it=state.items.find(x=>Number(x.id)===Number(id)),c=getCount(id),ps=getPhotos(id),ro=readOnly();
+ if(!it){$('editor').innerHTML='<p>没有选中商品</p>';return;}
+ var fmt=(x)=>x===null||x===undefined?'':String(x);
+ $('editor').innerHTML=
+ '<div class="headrow"><span class="pill">商品 #'+esc(it.id)+'</span><span class="tiny muted">'+(c?'✓ 已保存':'○ 尚未盘点')+'</span></div>'+
+ '<div class="cardtitle">'+esc(it.name)+'</div><div class="desc">Packing Style: <b>'+esc(it.pack||'—')+'</b>　单位: <b>'+esc(it.unit||'CS')+'</b></div>'+
+ (ro?'<div class="alert">该轮盘点是历史记录，只能查看与导出。</div>':'')+
+ '<div class="flex"><b>等级与最终数量</b><span class="tiny muted">同商品多箱只填最终总数</span></div>'+
+ '<div class="inputrow" style="margin-top:11px"><div><label>No.1 等级</label><input id="g1" value="'+esc(c?c.grade1:'No.1')+'" '+(ro?'disabled':'')+'></div><div><label>数量</label><input id="q1" inputmode="decimal" type="number" step=".001" min="0" value="'+esc(c?fmt(c.qty1):'')+'" '+(ro?'disabled':'')+'></div><div><label>单位</label><input id="u1" value="'+esc(c?c.unit1:it.unit)+'" '+(ro?'disabled':'')+'></div></div>'+
+ '<div class="inputrow" style="margin-top:11px"><div><label>第2种等级</label><input id="g2" value="'+esc(c?c.grade2:'No.2')+'" '+(ro?'disabled':'')+'></div><div><label>数量</label><input id="q2" inputmode="decimal" type="number" step=".001" min="0" placeholder="可不填" value="'+esc(c&&Number(c.qty2)>0?fmt(c.qty2):'')+'" '+(ro?'disabled':'')+'></div><div><label>单位</label><input id="u2" value="'+esc(c?c.unit2:it.unit)+'" '+(ro?'disabled':'')+'></div></div>'+
+ '<div class="note"><label>备注（可选）</label><input id="note" maxlength="600" placeholder="箱体状态、品相、批次……" value="'+esc(c?c.note:'')+'" '+(ro?'disabled':'')+'></div>'+
+ '<div class="foto"><div class="camera">📷</div><b>当前商品照片</b><p class="muted tiny" style="margin:5px 0">有库存至少 1 张，最多 3 张；自动压缩上传</p>'+
+ (ro?'':'<div class="links"><button class="outline" onclick="openCamera()">拍照</button><button class="outline" onclick="$(\'gallery\').click()">从相册选择</button></div>')+
+ '<div id="queued" class="tiny"></div><div class="thumbnails" id="photos"></div></div>'+
+ '<div class="actions">'+(ro?'':'<button class="primary" onclick="saveCurrent(false)">💾 保存并下一项</button><button class="warn" onclick="saveCurrent(true)">无库存 0</button>')+'<button class="outline" onclick="jumpNext()">跳过 / 下一项</button></div>';
+ loadThumbs(ps,ro);
+ renderList();
+}
+async function loadThumbs(ps,ro){
+ var target=$('photos');if(!target)return;
+ target.innerHTML=ps.length?'':'<span class="muted tiny">尚无照片</span>';
+ for(var p of ps){
+  var node=document.createElement('div');node.className='thumb';node.innerHTML='<div class="photo-label">'+esc(p.grade||'货物照片')+'</div><img alt="商品实拍" loading="lazy"><div>'+(!ro?'<button class="danger" onclick="deletePhoto(\''+p.id+'\')">删除重拍</button>':'')+'</div>';
+  target.appendChild(node);
+  try{node.querySelector('img').src=await imageBlobUrl(p.id);}catch(e){node.querySelector('img').alt='照片读取失败';}
+ }
+}
+async function imageBlobUrl(id){if(thumbUrls[id])return thumbUrls[id];var r=await fetch(API_BASE+'?action=image&id='+encodeURIComponent(id),{headers:{'X-JFT-Pin':cred}});if(!r.ok)throw Error('照片无法加载');return thumbUrls[id]=URL.createObjectURL(await r.blob());}
+function openCamera(){$('camera').click();}
+async function pickedPhoto(input){
+ var f=input.files&&input.files[0];input.value='';if(!f)return;
+ try{setBusy(true);queuedFile=await compress(f);if(queuedPreview)URL.revokeObjectURL(queuedPreview);queuedPreview=URL.createObjectURL(queuedFile);
+ $('queued').innerHTML='<div style="margin-top:10px"><img src="'+esc(queuedPreview)+'" style="max-width:160px;max-height:125px;border-radius:8px"><p>✅ 照片已准备，保存商品时上传 ('+Math.round(queuedFile.size/1024)+'KB)</p></div>';
+ }catch(e){notify('图片处理失败：'+e.message);}finally{setBusy(false);}
+}
+async function compress(file){return new Promise((resolve,reject)=>{
+ var img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{try{var ratio=Math.min(1,1600/Math.max(img.width,img.height));var can=document.createElement('canvas');can.width=Math.round(img.width*ratio);can.height=Math.round(img.height*ratio);can.getContext('2d').drawImage(img,0,0,can.width,can.height);can.toBlob(b=>{URL.revokeObjectURL(url);if(b)resolve(new File([b],'fresh.jpg',{type:'image/jpeg'}));else reject(Error('不能压缩照片'));},'image/jpeg',.75);}catch(e){URL.revokeObjectURL(url);reject(e);}};img.onerror=()=>{URL.revokeObjectURL(url);reject(Error('不支持的图片格式'));};img.src=url;});}
+async function saveCurrent(zero){
+ if(busy||readOnly())return;var it=state.items.find(x=>Number(x.id)===Number(current));var photos=getPhotos(current);
+ var q1=Number($('q1').value||0),q2=Number($('q2').value||0);
+ if(!zero&&$('q1').value===''&&$('q2').value==='')return notify('请输入数量；无货请点「无库存 0」');
+ if(!zero&&q1+q2>0&&!queuedFile&&!photos.length)return notify('有库存的商品需要至少拍一张照片');
+ try{setBusy(true);
+  await api('save',{batchId:state.batch.id,itemId:current,grade1:$('g1').value,qty1:q1,unit1:$('u1').value,grade2:$('g2').value,qty2:q2,unit2:$('u2').value,note:$('note').value,zero:zero});
+  if(!zero&&queuedFile){var form=new FormData();form.append('batchId',state.batch.id);form.append('itemId',current);form.append('grade',$('g1').value);form.append('file',queuedFile,'fresh.jpg');await api('photo',form);}
+  var old=current;await loadState(state.batch.id);
+  var next=nextUncounted();if(next){showItem(next.id);notify('已保存 #'+old+'，进入下一项');}else{showItem(old);notify('已保存！所有商品都已盘点或可以手动选择');}
+ }catch(e){notify('未完成保存：'+e.message);}finally{setBusy(false);}
+}
+async function deletePhoto(id){if(!confirm('确认删除这张照片？'))return;try{setBusy(true);await api('delete-photo',{id,batchId:state.batch.id});if(thumbUrls[id]){URL.revokeObjectURL(thumbUrls[id]);delete thumbUrls[id];}await loadState(state.batch.id);notify('已删除照片');}catch(e){notify(e.message);}finally{setBusy(false);}}
+function jumpNext(){if(!state||!state.items.length)return;var i=state.items.findIndex(x=>Number(x.id)===Number(current));showItem(state.items[(i+1)%state.items.length].id);}
+async function chooseHistory(id){try{setBusy(true);await loadState(id||undefined);current=null;render();}catch(e){notify(e.message);}finally{setBusy(false);}}
+async function startBatch(replace){
+ if(busy)return;
+ var rep=replace?(state.batch?state.batch.rep:prompt('盘点人 Rep：')):$('rep').value.trim();
+ if(replace){var typed=prompt('新一轮盘点将归档旧轮次（旧数据仍可查询）。请输入本次盘点人 Rep：',rep||'');if(typed===null)return;rep=typed.trim();if(!confirm('确认开始新的一轮？上一轮将保留为只读历史。'))return;}
+ if(!rep||rep.length<2)return notify('请填写至少两个字符的 Rep');
+ try{setBusy(true);state=await api('start',{rep:rep,replace:!!replace});current=null;$('search').value='';render();notify('已开始本轮盘点');}catch(e){notify(e.message);}finally{setBusy(false);}
+}
+function checkExport(){
+ if(!state.batch){notify('请先开始盘点');return false;}
+ var n=state.items.length-state.counts.length;
+ if(n>0&&!confirm('还有 '+n+' 项未盘。导出会把它们列为 0，并在明细中标明未盘，确认导出？'))return false;
+ return true;
+}
+function qtyLabel(c,k){return c?String(Number(c['qty'+k]||0))+String(c['unit'+k]||''):'0';}
+function exportExcel(){
+ if(!checkExport())return;var b=state.batch;
+ var rows=[['Date',b.count_date,'Rep',b.rep],['等级','数量','等级','数量','Item','Packing Style','Unit']];
+ var detail=[['Row','Item','Packing Style','Unit','No.1 Grade','No.1 Qty','No.1 Unit','No.2 Grade','No.2 Qty','No.2 Unit','Status','Photo Count','Note','Date','Rep']];
+ state.items.forEach(it=>{var c=getCount(it.id),p=getPhotos(it.id);rows.push([c?c.grade1:'',qtyLabel(c,1),c?c.grade2:'',qtyLabel(c,2),it.name,it.pack,it.unit]);
+ detail.push([it.id,it.name,it.pack,it.unit,c?c.grade1:'',c?Number(c.qty1):0,c?c.unit1:it.unit,c?c.grade2:'',c?Number(c.qty2):0,c?c.unit2:it.unit,c?(c.zero?'Confirmed Zero':'Counted'):'NOT COUNTED (exported 0)',p.length,c?c.note:'',b.count_date,b.rep]);});
+ var name='JFT_Fresh_Inventory_'+b.count_date+'_'+b.rep.replace(/[^a-zA-Z0-9_-]/g,'_');
+ if(window.XLSX){var wb=XLSX.utils.book_new(),sh=XLSX.utils.aoa_to_sheet(rows),det=XLSX.utils.aoa_to_sheet(detail);sh['!cols']=[{wch:18},{wch:16},{wch:18},{wch:16},{wch:44},{wch:23},{wch:11}];det['!cols']=[{wch:8},{wch:44},{wch:20},{wch:10},{wch:16},{wch:12},{wch:12},{wch:15},{wch:12},{wch:12},{wch:28},{wch:14},{wch:42},{wch:14},{wch:13}];XLSX.utils.book_append_sheet(wb,sh,'蔬菜库存表');XLSX.utils.book_append_sheet(wb,det,'盘点明细');XLSX.writeFile(wb,name+'.xlsx');notify('Excel 已导出');}
+ else{var csv=rows.map(row=>row.map(v=>'"'+String(v===null?'':v).replace(/"/g,'""')+'"').join(',')).join('\r\n');downloadBlob(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),name+'.csv');notify('Excel 组件未加载，已导出兼容 Excel 的 CSV');}
+}
+function downloadBlob(b,name){var u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000);}
+function dataURI(blob){return new Promise((res,rej)=>{var f=new FileReader();f.onload=()=>res(f.result);f.onerror=rej;f.readAsDataURL(blob);});}
+async function photoData(id){try{var r=await fetch(API_BASE+'?action=image&id='+encodeURIComponent(id),{headers:{'X-JFT-Pin':cred}});if(!r.ok)throw Error('照片未找到');return await dataURI(await r.blob());}catch{return '';}}
+function pdfCard(it,num,photo){
+ var c=getCount(it.id),stock=c?Number(c.qty1)+Number(c.qty2):0,zero=stock===0;
+ var status=c?(zero?'OUT OF STOCK':'IN STOCK'):'NOT COUNTED';
+ var b1=c?(esc(c.grade1||'No.1')+' '+esc(qtyLabel(c,1))):'0 '+esc(it.unit);
+ var b2=c&&Number(c.qty2)>0?(esc(c.grade2||'No.2')+' '+esc(qtyLabel(c,2))):'';
+ return '<div class="pcard"><div class="pimage">'+(photo&&!zero?'<img src="'+esc(photo)+'">':'<div class="noimg">'+(zero?'0 STOCK':'NO PHOTO')+'</div>')+'<div class="pnum">'+num+'</div><div class="pflag '+(zero?'red':'')+'">'+status+'</div></div>'+
+ '<div class="pname">'+esc(it.name)+'</div><div class="ppack">'+esc(it.pack+' / '+it.unit)+'</div><div class="pqty"><span>'+b1+'</span>'+(b2?'<span>'+b2+'</span>':'')+'</div></div>';
+}
+function createPdfPage(items,p,all,photos){
+ var b=state.batch,div=document.createElement('div');div.className='pdfpage';
+ div.style.cssText='width:816px;height:1056px;background:white;color:#152c20;padding:27px 27px 21px;font-family:Arial,"Noto Sans CJK SC","Microsoft YaHei",sans-serif;box-sizing:border-box;';
+ div.innerHTML='<style>.pdfpage .ph{height:80px;border-bottom:4px solid #0b7048;margin-bottom:15px;display:flex;justify-content:space-between;gap:15px}.pdfpage .ph strong{font-size:24px;color:#075b3e}.pdfpage .ph .st{font-size:15px;font-weight:bold}.pdfpage .ph .pt{font-size:13px;color:#55705c;margin-top:5px}.pdfpage .pgrid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);gap:12px;height:873px}.pdfpage .pcard{border:1px solid #cbd8ce;border-radius:10px;overflow:hidden;padding:6px;min-width:0}.pdfpage .pimage{height:123px;position:relative;overflow:hidden;border-radius:7px;background:#e6eee7}.pdfpage .pimage img{width:100%;height:100%;object-fit:cover}.pdfpage .pnum{position:absolute;top:5px;left:5px;background:#0c7548;color:#fff;font-size:11px;font-weight:bold;padding:4px 7px;border-radius:5px}.pdfpage .pflag{position:absolute;right:3px;top:5px;background:#0b744c;color:white;font-size:9px;padding:4px;border-radius:4px}.pdfpage .pflag.red{background:#a12d22}.pdfpage .noimg{height:100%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;color:#99a99e}.pdfpage .pname{font-size:13px;line-height:1.23;font-weight:800;height:34px;overflow:hidden;margin:5px 2px 1px;overflow-wrap:anywhere}.pdfpage .ppack{font-size:11px;color:#607667;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin:0 2px 4px}.pdfpage .pqty{display:flex;gap:3px;margin:2px 0}.pdfpage .pqty span{font-size:10px;font-weight:bold;border-radius:4px;background:#e1efe1;padding:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}.pdfpage .pf{font-size:12px;color:#376149;display:flex;justify-content:space-between;margin-top:11px}</style>'+
+ '<div class="ph"><div><strong>JFT FOOD DISTRIBUTION</strong><div class="pt">Inventory Count Report · 蔬菜鲜货盘点报告</div></div><div style="text-align:right"><div class="st">Date: '+esc(b.count_date)+'</div><div class="pt">Rep: '+esc(b.rep)+'</div></div></div>'+
+ '<div class="pgrid">'+items.map((it,i)=>pdfCard(it,p*12+i+1,photos[i])).join('')+'</div>'+
+ '<div class="pf"><span>Items: '+state.items.length+' · Counted: '+state.counts.length+' · Not Counted: '+(state.items.length-state.counts.length)+'</span><b>Page '+(p+1)+' / '+all+'</b></div>';
+ return div;
+}
+async function exportPDF(){
+ if(busy||!checkExport())return;
+ if(!window.jspdf||!window.html2canvas)return notify('PDF 组件尚未加载，请确认浏览器已联网后刷新');
+ try{setBusy(true);notify('正在生成照片 PDF，较多商品可能需要一点时间');
+ var chunks=[];for(var i=0;i<state.items.length;i+=12)chunks.push(state.items.slice(i,i+12));
+ var pdf=new window.jspdf.jsPDF({unit:'mm',format:'letter',orientation:'portrait',compress:true});
+ for(var p=0;p<chunks.length;p++){
+  var photos=await Promise.all(chunks[p].map(async it=>{var arr=getPhotos(it.id),c=getCount(it.id);return arr.length&&c&&!c.zero?await photoData(arr[0].id):'';}));
+  var div=createPdfPage(chunks[p],p,chunks.length,photos);div.style.position='fixed';div.style.left='0px';div.style.top='0px';div.style.zIndex='-5';div.style.pointerEvents='none';
+  document.body.appendChild(div);
+  await Promise.all(Array.from(div.querySelectorAll('img')).map(img=>img.complete?Promise.resolve():new Promise(r=>{img.onload=r;img.onerror=r;setTimeout(r,4000);})));
+  var canvas=await html2canvas(div,{backgroundColor:'#ffffff',scale:1.35,useCORS:true,logging:false,width:816,height:1056});
+  div.remove();
+  if(p)pdf.addPage('letter','portrait');
+  pdf.addImage(canvas.toDataURL('image/jpeg',.84),'JPEG',0,0,215.9,279.4);
+  if(p===0||p===chunks.length-1||p%3===2)notify('正在生成 PDF：'+(p+1)+' / '+chunks.length+' 页');
+  await new Promise(r=>setTimeout(r,0));
+ }
+ pdf.save('JFT_Fresh_Photo_Report_'+state.batch.count_date+'.pdf');
+ notify('PDF 已完成：'+chunks.length+' 页，每页最多 12 项');
+ }catch(e){notify('PDF 导出失败：'+e.message);}finally{setBusy(false);}
+}
+(function(){var p=sessionStorage.getItem('jft_fresh_pin');if(p){cred=p;loadState().then(()=>{$('login').classList.add('hidden');$('app').classList.remove('hidden');$('logout').classList.remove('hidden');$('changePinBtn').classList.remove('hidden');}).catch(()=>{sessionStorage.removeItem('jft_fresh_pin');cred='';});}document.getElementById('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login();});})();
+</script></body></html>
