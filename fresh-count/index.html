@@ -84,7 +84,7 @@ function showItem(id){
  '<div class="flex"><b>等级或批次与最终数量</b><span class="tiny muted">可填 No.1 / No.2 或批次；数量填最终总数</span></div>'+
  '<div class="inputrow" style="margin-top:11px"><div><label>等级或批次 1</label><input id="g1" value="'+esc(c?c.grade1:'No.1')+'" '+(ro?'disabled':'')+'></div><div><label>数量</label><input id="q1" inputmode="decimal" type="number" step=".001" min="0" value="'+esc(c?fmt(c.qty1):'')+'" '+(ro?'disabled':'')+'></div><div><label>单位</label><input id="u1" value="'+esc(c?c.unit1:it.unit)+'" '+(ro?'disabled':'')+'></div></div>'+
  '<div class="inputrow" style="margin-top:11px"><div><label>等级或批次 2</label><input id="g2" value="'+esc(c?c.grade2:'No.2')+'" '+(ro?'disabled':'')+'></div><div><label>数量</label><input id="q2" inputmode="decimal" type="number" step=".001" min="0" placeholder="可不填" value="'+esc(c&&Number(c.qty2)>0?fmt(c.qty2):'')+'" '+(ro?'disabled':'')+'></div><div><label>单位</label><input id="u2" value="'+esc(c?c.unit2:it.unit)+'" '+(ro?'disabled':'')+'></div></div>'+
- '<div class="note"><label>备注（可选）</label><input id="note" maxlength="600" placeholder="箱体状态、品相、批次……" value="'+esc(c?c.note:'')+'" '+(ro?'disabled':'')+'></div>'+
+ '<div class="inputrow" style="margin-top:11px"><div><label>等级或批次 3</label><input id="g3" placeholder="可选：No.3 / 批次号" value="'+esc(c?c.grade3||'':'')+'" '+(ro?'disabled':'')+'></div><div><label>数量</label><input id="q3" inputmode="decimal" type="number" step=".001" min="0" placeholder="可不填" value="'+esc(c&&Number(c.qty3)>0?fmt(c.qty3):'')+'" '+(ro?'disabled':'')+'></div><div><label>单位</label><input id="u3" value="'+esc(c?c.unit3||it.unit:it.unit)+'" '+(ro?'disabled':'')+'></div></div>'+
  '<div class="foto"><div class="camera">📷</div><b>当前商品照片</b><p class="muted tiny" style="margin:5px 0">有库存至少 1 张，最多 3 张；自动压缩上传</p>'+
  (ro?'':'<div class="links"><button class="outline" onclick="openCamera()">拍照</button><button class="outline" onclick="$(\'gallery\').click()">从相册选择</button></div>')+
  '<div id="queued" class="tiny"></div><div class="thumbnails" id="photos"></div></div>'+
@@ -113,11 +113,11 @@ async function compress(file){return new Promise((resolve,reject)=>{
  var img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{try{var ratio=Math.min(1,1600/Math.max(img.width,img.height));var can=document.createElement('canvas');can.width=Math.round(img.width*ratio);can.height=Math.round(img.height*ratio);can.getContext('2d').drawImage(img,0,0,can.width,can.height);can.toBlob(b=>{URL.revokeObjectURL(url);if(b)resolve(new File([b],'fresh.jpg',{type:'image/jpeg'}));else reject(Error('不能压缩照片'));},'image/jpeg',.75);}catch(e){URL.revokeObjectURL(url);reject(e);}};img.onerror=()=>{URL.revokeObjectURL(url);reject(Error('不支持的图片格式'));};img.src=url;});}
 async function saveCurrent(zero){
  if(busy||readOnly())return;var it=state.items.find(x=>Number(x.id)===Number(current));var photos=getPhotos(current);
- var q1=Number($('q1').value||0),q2=Number($('q2').value||0);
- if(!zero&&$('q1').value===''&&$('q2').value==='')return notify('请输入数量；无货请点「无库存 0」');
- if(!zero&&q1+q2>0&&!queuedFile&&!photos.length)return notify('有库存的商品需要至少拍一张照片');
+ var q1=Number($('q1').value||0),q2=Number($('q2').value||0),q3=Number($('q3').value||0);
+ if(!zero&&$('q1').value===''&&$('q2').value===''&&$('q3').value==='')return notify('请输入数量；无货请点「无库存 0」');
+ if(!zero&&q1+q2+q3>0&&!queuedFile&&!photos.length)return notify('有库存的商品需要至少拍一张照片');
  try{setBusy(true);
-  await api('save',{batchId:state.batch.id,itemId:current,grade1:$('g1').value,qty1:q1,unit1:$('u1').value,grade2:$('g2').value,qty2:q2,unit2:$('u2').value,note:$('note').value,zero:zero});
+  await api('save',{batchId:state.batch.id,itemId:current,grade1:$('g1').value,qty1:q1,unit1:$('u1').value,grade2:$('g2').value,qty2:q2,unit2:$('u2').value,grade3:$('g3').value,qty3:q3,unit3:$('u3').value,zero:zero});
   if(!zero&&queuedFile){var form=new FormData();form.append('batchId',state.batch.id);form.append('itemId',current);form.append('grade',$('g1').value);form.append('file',queuedFile,'fresh.jpg');await api('photo',form);}
   var old=current;await loadState(state.batch.id);
   var next=nextUncounted();if(next){showItem(next.id);notify('已保存 #'+old+'，进入下一项');}else{showItem(old);notify('已保存！所有商品都已盘点或可以手动选择');}
@@ -139,27 +139,56 @@ function checkExport(){
  if(n>0&&!confirm('还有 '+n+' 项未盘。导出会把它们列为 0，并在明细中标明未盘，确认导出？'))return false;
  return true;
 }
-function qtyLabel(c,k){return c?String(Number(c['qty'+k]||0))+String(c['unit'+k]||''):'0';}
+function qtyLabel(c,k,defaultUnit){return c?String(Number(c['qty'+k]||0))+' '+String(c['unit'+k]||defaultUnit||'CS'):'0 '+String(defaultUnit||'CS');}
 function exportExcel(){
- if(!checkExport())return;var b=state.batch;
- var rows=[['Date',b.count_date,'Rep',b.rep],['等级或批次','数量','等级或批次','数量','Item','Packing Style','Unit']];
- var detail=[['Row','Item','Packing Style','Unit','Grade / Batch 1','No.1 Qty','No.1 Unit','Grade / Batch 2','No.2 Qty','No.2 Unit','Status','Photo Count','Note','Date','Rep']];
- state.items.forEach(it=>{var c=getCount(it.id),p=getPhotos(it.id);rows.push([c?c.grade1:'',qtyLabel(c,1),c?c.grade2:'',qtyLabel(c,2),it.name,it.pack,it.unit]);
- detail.push([it.source_order||it.id,it.name,it.pack,it.unit,c?c.grade1:'',c?Number(c.qty1):0,c?c.unit1:it.unit,c?c.grade2:'',c?Number(c.qty2):0,c?c.unit2:it.unit,c?(c.zero?'Confirmed Zero':'Counted'):'NOT COUNTED (exported 0)',p.length,c?c.note:'',b.count_date,b.rep]);});
+ if(!checkExport())return;
+ var b=state.batch;
+ var summary=[['Item / 商品','Grade or Batch 1','Qty 1','Grade or Batch 2','Qty 2','Grade or Batch 3','Qty 3','Packing Style','Unit','Status']];
+ var detail=[['Sheet Row','Item / 商品','Packing Style','Unit','Grade or Batch 1','Qty 1','Unit 1','Grade or Batch 2','Qty 2','Unit 2','Grade or Batch 3','Qty 3','Unit 3','Status','Photo Count','Date','Rep']];
+ state.items.forEach(it=>{
+  var c=getCount(it.id),p=getPhotos(it.id);
+  var status=c?(c.zero?'Confirmed Zero':'Counted'):'NOT COUNTED (0)';
+  summary.push([
+   it.name,c?c.grade1:'',qtyLabel(c,1,it.unit),
+   c?c.grade2:'',qtyLabel(c,2,it.unit),
+   c?c.grade3:'',qtyLabel(c,3,it.unit),
+   it.pack,it.unit,status
+  ]);
+  detail.push([it.source_order||it.id,it.name,it.pack,it.unit,
+   c?c.grade1:'',c?Number(c.qty1):0,c?c.unit1:it.unit,
+   c?c.grade2:'',c?Number(c.qty2):0,c?c.unit2:it.unit,
+   c?c.grade3:'',c?Number(c.qty3):0,c?c.unit3:it.unit,
+   status,p.length,b.count_date,b.rep
+  ]);
+ });
  var name='JFT_Fresh_Inventory_'+b.count_date+'_'+b.rep.replace(/[^a-zA-Z0-9_-]/g,'_');
- if(window.XLSX){var wb=XLSX.utils.book_new(),sh=XLSX.utils.aoa_to_sheet(rows),det=XLSX.utils.aoa_to_sheet(detail);sh['!cols']=[{wch:18},{wch:16},{wch:18},{wch:16},{wch:44},{wch:23},{wch:11}];det['!cols']=[{wch:8},{wch:44},{wch:20},{wch:10},{wch:16},{wch:12},{wch:12},{wch:15},{wch:12},{wch:12},{wch:28},{wch:14},{wch:42},{wch:14},{wch:13}];XLSX.utils.book_append_sheet(wb,sh,'蔬菜库存表');XLSX.utils.book_append_sheet(wb,det,'盘点明细');XLSX.writeFile(wb,name+'.xlsx');notify('Excel 已导出');}
- else{var csv=rows.map(row=>row.map(v=>'"'+String(v===null?'':v).replace(/"/g,'""')+'"').join(',')).join('\r\n');downloadBlob(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),name+'.csv');notify('Excel 组件未加载，已导出兼容 Excel 的 CSV');}
+ if(window.XLSX){
+  var wb=XLSX.utils.book_new(),sh=XLSX.utils.aoa_to_sheet(summary),det=XLSX.utils.aoa_to_sheet(detail);
+  sh['!cols']=[{wch:48},{wch:20},{wch:14},{wch:20},{wch:14},{wch:20},{wch:14},{wch:20},{wch:11},{wch:24}];
+  det['!cols']=[{wch:11},{wch:48},{wch:20},{wch:10},{wch:20},{wch:12},{wch:12},{wch:20},{wch:12},{wch:12},{wch:20},{wch:12},{wch:12},{wch:26},{wch:14},{wch:15},{wch:14}];
+  sh['!autofilter']={ref:'A1:J'+summary.length};
+  det['!autofilter']={ref:'A1:Q'+detail.length};
+  XLSX.utils.book_append_sheet(wb,sh,'库存汇总');
+  XLSX.utils.book_append_sheet(wb,det,'盘点明细');
+  XLSX.writeFile(wb,name+'.xlsx');
+  notify('Excel 已导出：三组等级或批次');
+ }else{
+  var csv=summary.map(row=>row.map(v=>'"'+String(v===null?'':v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  downloadBlob(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),name+'.csv');
+  notify('Excel 组件未加载，已导出兼容 Excel 的 CSV');
+ }
 }
 function downloadBlob(b,name){var u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000);}
 function dataURI(blob){return new Promise((res,rej)=>{var f=new FileReader();f.onload=()=>res(f.result);f.onerror=rej;f.readAsDataURL(blob);});}
 async function photoData(id){try{var r=await fetch(API_BASE+'?action=image&id='+encodeURIComponent(id),{headers:{'X-JFT-Pin':cred}});if(!r.ok)throw Error('照片未找到');return await dataURI(await r.blob());}catch{return '';}}
 function pdfCard(it,num,photo){
- var c=getCount(it.id),stock=c?Number(c.qty1)+Number(c.qty2):0,zero=stock===0;
+ var c=getCount(it.id),stock=c?Number(c.qty1)+Number(c.qty2)+Number(c.qty3||0):0,zero=stock===0;
  var status=c?(zero?'OUT OF STOCK':'IN STOCK'):'NOT COUNTED';
  var b1=c?(esc(c.grade1||'No.1')+' '+esc(qtyLabel(c,1))):'0 '+esc(it.unit);
  var b2=c&&Number(c.qty2)>0?(esc(c.grade2||'No.2')+' '+esc(qtyLabel(c,2))):'';
+ var b3=c&&Number(c.qty3)>0?(esc(c.grade3||'No.3')+' '+esc(qtyLabel(c,3))):'';
  return '<div class="pcard"><div class="pimage">'+(photo&&!zero?'<img src="'+esc(photo)+'">':'<div class="noimg">'+(zero?'0 STOCK':'NO PHOTO')+'</div>')+'<div class="pnum">'+num+'</div><div class="pflag '+(zero?'red':'')+'">'+status+'</div></div>'+
- '<div class="pname">'+esc(it.name)+'</div><div class="ppack">'+esc(it.pack+' / '+it.unit)+'</div><div class="pqty"><span>'+b1+'</span>'+(b2?'<span>'+b2+'</span>':'')+'</div></div>';
+ '<div class="pname">'+esc(it.name)+'</div><div class="ppack">'+esc(it.pack+' / '+it.unit)+'</div><div class="pqty"><span>'+b1+'</span>'+(b2?'<span>'+b2+'</span>':'')+(b3?'<span>'+b3+'</span>':'')+'</div></div>';
 }
 function createPdfPage(items,p,all,photos){
  var b=state.batch,div=document.createElement('div');div.className='pdfpage';
@@ -229,7 +258,7 @@ async function pdfRasterPage(items,index,total){
  for(var i=0;i<items.length;i++){
   var it=items[i],x=26+(i%3)*(cardW+gapX),y=top+Math.floor(i/3)*(cardH+gapY);
   var c=getCount(it.id),ph=getPhotos(it.id);
-  var q=c?Number(c.qty1||0)+Number(c.qty2||0):0;
+  var q=c?Number(c.qty1||0)+Number(c.qty2||0)+Number(c.qty3||0):0;
   var counted=!!c,instock=counted&&q>0;
   pdfRound(ctx,x,y,cardW,cardH,9,'#ffffff','#c5d9ce');
   var ix=x+6,iy=y+6,iw=cardW-12,ih=117;
@@ -262,6 +291,7 @@ async function pdfRasterPage(items,index,total){
   if(c&&!c.zero&&q>0){
    if(Number(c.qty1)>0)badges.push((c.grade1||'Grade 1')+': '+Number(c.qty1)+' '+(c.unit1||it.unit));
    if(Number(c.qty2)>0)badges.push((c.grade2||'Grade 2')+': '+Number(c.qty2)+' '+(c.unit2||it.unit));
+   if(Number(c.qty3)>0)badges.push((c.grade3||'Grade 3')+': '+Number(c.qty3)+' '+(c.unit3||it.unit));
   }
   if(!badges.length)badges=[counted?'0 '+(it.unit||'CS'):'未盘点 / 0 '+(it.unit||'CS')];
   var bw=(iw-(badges.length-1)*5)/badges.length;
