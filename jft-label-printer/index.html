@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JFT Label Printer</title>
+<style>
+:root{font-family:Arial,"Microsoft YaHei",sans-serif;color:#182437;background:#f3f5f9}
+*{box-sizing:border-box}body{margin:0}
+header{background:#172b48;color:white;padding:20px 24px}
+header h1{font-size:23px;margin:0 0 5px}header p{margin:0;opacity:.8;font-size:13px}
+main{max-width:1160px;margin:20px auto;padding:0 16px 50px}
+.panel{background:white;border:1px solid #e1e6ed;border-radius:13px;padding:18px;margin-bottom:16px}
+h2{font-size:17px;margin:0 0 14px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+.field{flex:1;min-width:170px}.field label{display:block;font-size:12px;font-weight:bold;color:#435069;margin-bottom:6px}
+input,textarea,select,button{font:inherit}
+input,textarea,select{border:1px solid #c8d1de;border-radius:8px;padding:10px;background:white;color:#182437;width:100%}
+textarea{height:162px;resize:vertical;font-family:ui-monospace,monospace;font-size:12px;tab-size:4}
+button{border:0;border-radius:8px;padding:11px 16px;cursor:pointer;font-weight:700}
+.primary{background:#1763c5;color:white}.secondary{background:#edf1f7;color:#20344e}.danger{background:#ffeff0;color:#a52328}
+.muted{font-size:12px;color:#697586}.help{background:#eff6ff;border-radius:8px;padding:10px;color:#24496e;font-size:12px;margin-top:11px}
+.status{margin-top:12px;font-size:13px;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stat{border:1px solid #dce2eb;border-radius:11px;padding:14px;display:flex;flex-direction:column;gap:4px}
+.stat h3{margin:0;font-size:17px}.stat .num{font-size:25px;font-weight:800}.stat .note{color:#778397;font-size:11px}
+.stat.dry{border-top:4px solid #c58e37}.stat.frozen{border-top:4px solid #347fce}.stat.fresh{border-top:4px solid #25a17e}
+.stat button{margin-top:6px}
+#records{margin-top:10px;max-height:550px;overflow:auto}
+.group{border:1px solid #e0e5ed;border-radius:10px;margin-bottom:12px;overflow:hidden}
+.grouphead{padding:10px 12px;font-size:13px;font-weight:bold;border-left:7px solid var(--accent);background:var(--pale)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+td,th{padding:7px 8px;border-top:1px solid #edf0f4;text-align:left;vertical-align:middle}
+th{background:#f8fafc}
+td:nth-child(1){width:30px}td:nth-child(3){width:110px}td:nth-child(4){width:100px}td:nth-child(5){width:70px}
+td .name{font-weight:600}td .desc{font-size:11px;color:#67778a;margin-top:2px}
+td select{padding:6px;width:104px}
+input[type="checkbox"]{width:17px;height:17px}
+#previewWrap{overflow:auto;background:#e5e9ef;padding:16px;border-radius:10px}
+.previewNotice{font-size:12px;color:#5b6877;margin-bottom:8px}
+.page{background:white;width:8.5in;height:11in;box-shadow:0 2px 16px #0002;margin:0 auto 18px;padding:.5in .1875in;display:grid;grid-template-columns:repeat(3,2.625in);grid-template-rows:repeat(10,1in);column-gap:.125in;row-gap:0;box-sizing:border-box}
+.sticker{width:2.625in;height:1in;min-width:0;min-height:0;overflow:hidden;position:relative;border-left:.105in solid var(--accent);background:var(--pale);color:#111;box-sizing:border-box;padding:.035in .055in .035in .065in;display:flex;flex-direction:column;justify-content:space-between}
+.sticker .top{display:flex;align-items:center;justify-content:space-between;font-size:5.8pt;line-height:1.1;color:#425067;gap:3px;white-space:nowrap}
+.sticker .top .rt{font-weight:bold;max-width:65%;text-align:right;overflow:hidden;text-overflow:ellipsis}
+.sticker .merchant{font-size:11.3pt;line-height:1.05;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--deep)}
+.sticker .item{font-size:8.2pt;line-height:1.09;font-weight:700;min-height:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+.sticker .shortage{display:inline-block;background:#b3202b;color:#fff;font-size:7pt;padding:1px 5px;border-radius:2px;font-weight:900;margin-right:3px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.sticker .bottom{display:flex;justify-content:space-between;align-items:end;gap:5px;min-height:.2in}
+.sticker .piece{font-size:15pt;line-height:1;font-weight:900}
+.sticker .qty{font-size:8pt;font-weight:800;text-align:right;max-width:63%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slotEmpty{background:#fff}
+#printer{display:none}
+@page{size:letter;margin:0}
+@media print{
+  html,body{padding:0;margin:0;background:white!important}
+  header,main{display:none!important}
+  #printer{display:block!important;margin:0!important;padding:0!important}
+  .page{box-shadow:none;margin:0!important;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto;break-after:auto}
+  .sticker{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media(max-width:750px){
+ .stats{grid-template-columns:1fr}
+ .page{transform-origin:top left;margin-left:0;box-shadow:none}
+ #previewWrap{max-height:650px}
+ main{padding:0 11px}
+ .panel{padding:13px}
+ header{padding:17px}
+}
+</style>
+</head>
+<body>
+<header><h1>JFT Food Distribution · Label Printer</h1><p>按路线连续排列 · 不同商家不同颜色 · 干 / 冻 / 鲜分开打印</p></header>
+<main>
+<section class="panel">
+<h2>① 粘贴联合出单表</h2>
+<div class="row">
+<div class="field"><label for="route">当前路线（仅粘贴单条路线时使用）</label>
+<select id="route">
+<option>Route 1 DT(South End)+QP</option><option>Route 2 DM</option>
+<option>Route 3 BF + 102 + BF Hwy</option>
+<option>Route 4 101 + LS + Larry Uteck</option><option>Route 5 DT(North End)+CP</option>
+<option>Route 5 Special Route</option><option>自取 / Pickup</option>
+</select></div>
+<div class="field" style="max-width:220px"><label for="date">送货日期</label><input type="date" id="date"></div>
+</div>
+<div style="margin-top:12px"><label for="paste" style="font-size:13px;font-weight:bold;display:block;margin-bottom:7px">从 Google Sheets 复制路线区域，粘贴在这里</label>
+<textarea id="paste" placeholder="支持复制整条路线（7列：序号 / 商家 / 商品 / 规格 / 数量 / 价格 / Sales），也支持多条路线一起复制。"></textarea></div>
+<div class="row" style="margin-top:12px">
+<button class="primary" id="parse">生成标签</button><button class="secondary" id="reset">清空</button>
+<label style="font-size:12px;display:flex;align-items:center;gap:7px"><input style="width:17px" type="checkbox" id="showMissing" checked> 打印缺货标签</label>
+</div>
+<div id="status" class="status"></div>
+<div class="help">标签纸：Staples / Avery 5160、8160，Letter，每页3列×10行。请在打印机中选择 <b>Actual Size / 100%</b>、关闭页眉页脚；彩色区分商家，若黑白打印仍可看见商家名称。</div>
+</section>
+<section class="panel" id="result" hidden>
+<h2>② 分类检查并分别打印</h2>
+<div class="stats">
+<div class="stat dry"><h3>干货 · Dry</h3><span class="num" id="countDry">0 张</span><span class="note" id="pagesDry"></span><button class="primary" data-print="dry">打印干货</button></div>
+<div class="stat frozen"><h3>冻货 · Frozen</h3><span class="num" id="countFrozen">0 张</span><span class="note" id="pagesFrozen"></span><button class="primary" data-print="frozen">打印冻货</button></div>
+<div class="stat fresh"><h3>鲜货 · Fresh</h3><span class="num" id="countFresh">0 张</span><span class="note" id="pagesFresh"></span><button class="primary" data-print="fresh">打印鲜货</button></div>
+</div>
+<div class="row" style="margin-top:12px">
+<div class="field" style="max-width:230px"><label for="firstSlot">第一张从第几格开始</label>
+<select id="firstSlot"></select></div>
+<div class="field" style="max-width:200px"><label for="previewCategory">预览分类</label>
+<select id="previewCategory"><option value="dry">干货</option><option value="frozen">冻货</option><option value="fresh">鲜货</option></select></div>
+</div>
+<div class="muted" style="margin-top:9px">可以在下方逐项修改干 / 冻 / 鲜分类。相同路线、同一商家的标签会连在一起，并使用相同颜色。默认跳过“缺货”商品。</div>
+<div id="shortages"></div><div id="records"></div>
+</section>
+<section class="panel" id="previewPanel" hidden>
+<h2>③ 打印预览（标签纸实物比例）</h2>
+<div class="previewNotice" id="previewInfo"></div>
+<div id="previewWrap"><div id="previewPages"></div></div>
+</section>
+</main>
+<div id="printer"></div>
+<script>
+(function(){
+'use strict';
+const el=id=>document.getElementById(id);
+const $=s=>document.querySelector(s);
+const colors=[
+ ['#b45150','#f9eceb','#873331'],['#3977af','#eaf3fc','#215886'],
+ ['#4f9263','#eef8ef','#326b44'],['#9269b2','#f4eef9','#71438e'],
+ ['#c1853f','#fff5e8','#966226'],['#268e91','#e9f9f7','#176668'],
+ ['#b16786','#fbf0f5','#873d5d'],['#727fae','#eff2fc','#505d92'],
+ ['#917c49','#faf6e9','#6a582d'],['#729343','#f4faeb','#537020'],
+ ['#bd6c55','#fff0e9','#954730'],['#64869c','#eef5f8','#47677e']];
+const names={dry:'干货',frozen:'冻货',fresh:'鲜货'};
+const records=[];
+let groupCounter=0,parsingStatus='';
+const valid=x=>{let s=String(x==null?'':x).trim();return s.toLowerCase()==='null'?'':s};
+const date=new Date();el('date').value=date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
+const slot=el('firstSlot');for(let i=1;i<=30;i++){const o=document.createElement('option');o.value=i;o.textContent='第 '+i+' 格';slot.append(o)}
+function html(s){return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
+function classify(n){
+ let x=n.toLowerCase().replace(/\s+/g,' ');
+ if(/cream cheese|奶油奶酪|奶油芝士|milk|牛奶|egg xl|xl egg|鸡蛋|bean sprout|芽菜|豆腐|tofu|fresh chicken|新鲜鸡|fresh pork|新鲜猪|fresh trimmed pork|salad mix|spring mix|mushroom|蘑菇|蔬菜|pepper|辣椒|cucumber|黄瓜|cabbage|椰菜|白菜|nappa|lettuce|romaine|celery|coriander|香菜|mint|pineapple|菠萝|tomato|番茄|carrot|胡萝卜|ginger|生姜|onion|洋葱|broccoli|西兰花|avocado|avo 48|牛油果|zucchini|茄子|eggplant|potato|土豆|cilantro|green leaf|kale|garlic|大蒜|萝卜苗|radish|bok choy|上海苗|芥兰|long green beans|鸡毛菜|油菜|绿豆芽|红椒|青椒|冬瓜|番薯|yam\b/.test(x))return 'fresh';
+ if(/chicken|鸡腿|鸡胸|鸡翅|鸡脚|鸡爪|鸡骨|pork|猪颈|猪骨|beef|牛腿|牛肉|lamb|鸭|chuck roll|inside round|eye round|shrimp|虾仁|nobashi|sushi ebi|蟹棒|crab stick|crab meat|鱿鱼|squid|clams|花蛤|octopus|章鱼|salmon|tuna|eel\b|unagi|edamame|毛豆|dumpling|饺子|spring roll|春卷|won ?ton wrap|馄饨皮|fish cake|鱼丸|鱼豆腐|masago|鱼籽|roe\b|rice cake|年糕|karaage|炸鸡|sushi ginger|寿司姜|shredded crab|海鲜|frozen|冷冻|冻货|素春卷|烧卖|流沙包/.test(x))return 'frozen';
+ return 'dry';
+}
+function pieces(q,spec){
+ let a=valid(q),b=valid(spec),m=a.match(/(?:^|\s)(\d+(?:\.\d+)?)\s*(cs|case|cases|bag|bags)\b/i);
+ let unit=m?/bag/i.test(m[2])?'bag':'cs':null;
+ let n=m?Number(m[1]):0;
+ if(!m && (!a || /(?:kg|lb|称重|缺货)/i.test(a))){let m2=b.match(/(\d+(?:\.\d+)?)\s*(cs|case|cases|bag|bags)\b/i);if(m2){n=Number(m2[1]);unit=/bag/i.test(m2[2])?'bag':'cs';}}
+ let count=unit && Number.isInteger(n) && n>0 && n<=500?n:1;
+ if(count>500)return 1;
+ return {count,unit,quantity:count>1?('1 '+unit):a||b||'1',overall:a||b};
+}
+function colorOf(s){
+ let h=0;for(const ch of s.toLowerCase())h=((h*31)+ch.charCodeAt(0))>>>0;
+ return colors[h%colors.length];
+}
+function process(){
+ const raw=el('paste').value;
+ if(!raw.trim()){el('status').textContent='请先粘贴联合出单表。';return}
+ records.splice(0);groupCounter=0;
+ const rows=raw.replace(/\r/g,'').split('\n').map(line=>line.split('\t').map(valid));
+ const header=rows.find(r=>r.some(c=>c==='商家名称') && r.some(c=>c==='产品名称'));
+ let groups=[];
+ if(header){
+  const merchants=[];header.forEach((v,i)=>{if(v==='商家名称' && header[i+1]==='产品名称')merchants.push(i)});
+  groups=merchants.map((i)=>({start:Math.max(0,i-1),end:i+6,merchantCol:i,itemCol:i+1,specCol:i+2,qtyCol:i+3,seqCol:header[i-1]==='序号'?i-1:-1,route:el('route').value}));
+ }
+ if(!groups.length){
+  const width=Math.max(...rows.map(r=>r.length));
+  if(width>=7){
+   for(let s=0;s<width;s+=7)groups.push({start:s,end:s+7,merchantCol:s+1,itemCol:s+2,specCol:s+3,qtyCol:s+4,seqCol:s,route:el('route').value});
+  }else if(width>=4){
+   let withSequence=false;
+   for(const r of rows.slice(0,30)){if(/^\d{1,2}$/.test(r[0]||'') && r[1] && !/^\d+$/.test(r[1])){withSequence=true;break}}
+   groups=[withSequence?{start:0,end:width,merchantCol:1,itemCol:2,specCol:3,qtyCol:4,seqCol:0,route:el('route').value}:{start:0,end:width,merchantCol:0,itemCol:1,specCol:2,qtyCol:3,seqCol:-1,route:el('route').value}];
+  }else{el('status').textContent='无法识别列：请至少复制商家、商品、规格、数量这4列。';return}
+ }
+ const routeOrder=new Map(),merchantOrder=new Map();
+ let missing=0,noQty=0;
+ for(const g of groups){
+  const routeRow=rows.find(r=>r.slice(g.start,g.end).some(c=>/^Route\s*\d/i.test(c)));
+  if(routeRow){const name=routeRow.slice(g.start,g.end).find(c=>/^Route\s*\d/i.test(c));if(name)g.route=name}
+  let customer='';
+  for(let i=0;i<rows.length;i++){
+   const r=rows[i],a=g.seqCol>=0?(r[g.seqCol]||''):'',b=r[g.merchantCol]||'',
+     item=r[g.itemCol]||'',spec=r[g.specCol]||'',qty=r[g.qtyCol]||'';
+   if(r.some((v,j)=>(j>=g.start && j<g.end) && (v==='产品名称' || v==='商家名称')))continue;
+   if(/^(发车|收车|序号|干货|冻货|鲜货)$/.test(item) || /^(全车货物拍照|空车拍照)$/.test(item))continue;
+   if(g.seqCol>=0){
+    if(/^\d{1,3}$/.test(a)&&b&&!/^(发车|收车)$/.test(b)&&!/^\d+$/.test(b))customer=b;
+    else if(!customer && b && !/^\d+$/.test(b) && item && !/^route/i.test(b))customer=b;
+   }else if(b&&!/^\d+$/.test(b) && !/^route/i.test(b) && item){customer=b;}
+   if(!item || /^(null|产品名称|日期|item|shipping|subtotal|total)$/i.test(item) || /^route\s*\d/i.test(item))continue;
+   if(!customer || /^(商家名称|序号)$/.test(customer))continue;
+   const noStock=/缺货|out\s*of\s*stock/i.test(spec+' '+qty);
+   if(noStock)missing++;
+   if(!qty)noQty++;
+   const p=pieces(qty,spec),route=g.route;
+   if(!routeOrder.has(route))routeOrder.set(route,routeOrder.size);
+   const mk=route+'\u241f'+customer;
+   if(!merchantOrder.has(mk))merchantOrder.set(mk,merchantOrder.size);
+   records.push({id:records.length,route,customer,name:item,spec,qty,category:classify(item),count:p.count,unit:p.unit,oneQty:p.quantity,
+    missing:noStock,include:!noStock||el('showMissing').checked,routeRank:routeOrder.get(route),merchantRank:merchantOrder.get(mk),color:colors[merchantOrder.get(mk)%colors.length]});
+  }
+ }
+ if(!records.length){el('status').textContent='没有识别到订单。请复制包含“序号 / 商家名称 / 产品名称 / 数量”的完整路线区域。';el('result').hidden=true;el('previewPanel').hidden=true;return}
+ el('result').hidden=false;el('previewPanel').hidden=false;
+ parsingStatus='已识别 '+records.length+' 个商品，'+routeOrder.size+' 条路线，'+merchantOrder.size+' 组商家'+(missing?'；'+missing+' 项缺货已标记并包含在标签中':'')+(noQty?'；'+noQty+' 项数量为空，请检查':'')+'。';
+ el('status').textContent=parsingStatus;
+ renderRecords();renderShortages();refresh();
+}
+
+function renderShortages(){
+ const root=el('shortages');root.replaceChildren();
+ const rows=records.filter(r=>r.missing);
+ if(!rows.length)return;
+ const section=document.createElement('div');
+ section.style.cssText='margin:16px 0;border:1px solid #f1c3c5;border-left:5px solid #c42c35;border-radius:8px;padding:11px;background:#fff8f8';
+ let body='<div style="font-size:16px;font-weight:800;color:#ac1827;margin-bottom:8px">缺货汇总 · '+rows.length+' 项（打印时每张也会标记「缺货」）</div><table><thead><tr><th>路线</th><th>商家</th><th>缺货商品</th><th>订单数量</th></tr></thead><tbody>';
+ for(const r of rows){body+='<tr><td>'+html(r.route)+'</td><td>'+html(r.customer)+'</td><td>'+html(r.name)+'</td><td>'+html(r.qty||r.spec||'未填写')+'</td></tr>';}
+ body+='</tbody></table>';section.innerHTML=body;root.append(section);
+}
+function activeRecords(category){return records.filter(r=>r.include&&r.category===category).slice().sort((a,b)=>a.routeRank-b.routeRank||a.merchantRank-b.merchantRank||a.id-b.id)}
+function allLabels(category){
+ const all=records.filter(r=>r.include).slice().sort((a,b)=>a.routeRank-b.routeRank||a.merchantRank-b.merchantRank||a.id-b.id);
+ const totals=new Map(),next=new Map(),stickerRows=[];
+ for(const r of all){const key=r.route+'\u241f'+r.customer;totals.set(key,(totals.get(key)||0)+r.count)}
+ for(const r of all){
+  const key=r.route+'\u241f'+r.customer;
+  for(let n=0;n<r.count;n++){
+   const index=(next.get(key)||0)+1;next.set(key,index);
+   if(r.category!==category)continue;
+   stickerRows.push({route:r.route,customer:r.customer,name:r.name,qty:r.oneQty,spec:r.spec,sequence:index+'/'+totals.get(key),color:r.color,missing:r.missing});
+  }
+ }
+ return stickerRows;
+}
+function renderRecords(){
+ const root=el('records');root.replaceChildren();
+ const order=records.slice().sort((a,b)=>a.routeRank-b.routeRank||a.merchantRank-b.merchantRank||a.id-b.id);
+ const groups=new Map();
+ for(const r of order){const key=r.route+'\u241f'+r.customer;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(r)}
+ for(const [key,items] of groups){
+  const r=items[0],section=document.createElement('div');section.className='group';section.style.setProperty('--accent',r.color[0]);section.style.setProperty('--pale',r.color[1]);
+  let body='<div class="grouphead">'+html(r.route)+'　|　'+html(r.customer)+'（'+items.length+' 项）</div><table><thead><tr><th>印</th><th>商品</th><th>仓库</th><th>数量</th><th>标签</th></tr></thead><tbody>';
+  for(const rec of items){
+   body+='<tr><td><input type="checkbox" data-id="'+rec.id+'" data-action="include" '+(rec.include?'checked':'')+'></td><td><div class="name">'+html(rec.name)+(rec.missing?' <strong style="color:#b3262e">【缺货】</strong>':'')+'</div><div class="desc">'+html(rec.spec)+'</div></td><td><select data-id="'+rec.id+'" data-action="category">';
+   for(const c of ['dry','frozen','fresh'])body+='<option value="'+c+'" '+(rec.category===c?'selected':'')+'>'+names[c]+'</option>';
+   body+='</select></td><td>'+html(rec.qty||'（空）')+'</td><td>'+rec.count+'</td></tr>';
+  }
+  body+='</tbody></table>';section.innerHTML=body;root.append(section);
+ }
+}
+function refresh(){
+ for(const c of ['dry','frozen','fresh']){
+  const list=allLabels(c),key=c[0].toUpperCase()+c.slice(1);
+  el('count'+key).textContent=list.length+' 张';
+  el('pages'+key).textContent=(list.length?Math.ceil((list.length+Number(el('firstSlot').value)-1)/30):0)+' 页标签纸';
+  const b=document.querySelector('[data-print="'+c+'"]');b.disabled=!list.length;b.style.opacity=list.length?'1':'.45';
+ }
+ preview();
+}
+function createPages(category,into){
+ const items=allLabels(category),start=Number(el('firstSlot').value)-1;into.replaceChildren();
+ if(!items.length)return;
+ const total=Math.ceil((start+items.length)/30);
+ const date=el('date').value.slice(5).replace('-','/');
+ for(let pageNo=0;pageNo<total;pageNo++){
+  const pg=document.createElement('div');pg.className='page';
+  for(let pos=0;pos<30;pos++){
+   const rec=items[pageNo*30+pos-start];
+   const node=document.createElement('div');
+   if(!rec){node.className='slotEmpty';pg.append(node);continue}
+   node.className='sticker';
+   node.style.setProperty('--accent',rec.color[0]);node.style.setProperty('--pale',rec.color[1]);node.style.setProperty('--deep',rec.color[2]);
+   const shortRoute=rec.route.replace(/\s*[+]\s*/g,'+').replace(/Route\s*/i,'R');
+   node.innerHTML='<div class="top"><span>JFT · '+html(date)+'</span><span class="rt">'+html(shortRoute)+'</span></div>'+
+    '<div class="merchant">'+html(rec.customer)+'</div>'+
+    '<div class="item">'+(rec.missing?'<span class="shortage">缺货</span>':'')+html(rec.name)+'</div>'+
+    '<div class="bottom"><span class="piece">'+html(rec.sequence)+'</span><span class="qty">'+html(rec.qty)+'</span></div>';
+   pg.append(node);
+  }
+  into.append(pg);
+ }
+}
+function preview(){
+ const c=el('previewCategory').value,list=allLabels(c);
+ el('previewInfo').textContent=names[c]+' · '+list.length+' 张 · 同路线、同商家连续排版 · 第 '+el('firstSlot').value+' 格开始';
+ createPages(c,el('previewPages'));
+}
+function doPrint(c){
+ if(!records.length || !allLabels(c).length)return;
+ el('previewCategory').value=c;preview();
+ createPages(c,el('printer'));
+ document.title='JFT-'+names[c]+'-Label-'+el('date').value;
+ window.print();
+}
+el('parse').onclick=process;
+el('reset').onclick=()=>{el('paste').value='';records.splice(0);el('result').hidden=true;el('previewPanel').hidden=true;el('status').textContent='';el('previewPages').replaceChildren();el('printer').replaceChildren()};
+el('records').addEventListener('change',e=>{
+ const id=Number(e.target.dataset.id),action=e.target.dataset.action,r=records[id];if(!r)return;
+ if(action==='category')r.category=e.target.value;
+ if(action==='include')r.include=e.target.checked;
+ refresh();
+});
+el('showMissing').addEventListener('change',()=>{records.forEach(r=>{if(r.missing)r.include=el('showMissing').checked});renderRecords();refresh()});
+el('firstSlot').addEventListener('change',refresh);
+el('previewCategory').addEventListener('change',preview);
+document.querySelectorAll('[data-print]').forEach(btn=>btn.addEventListener('click',()=>doPrint(btn.dataset.print)));
+window.addEventListener('afterprint',()=>{el('printer').replaceChildren();document.title='JFT Label Printer'});
+})();
+</script></body></html>
