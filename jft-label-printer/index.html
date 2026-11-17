@@ -234,7 +234,10 @@ function process(){
  if(!records.length){el('status').textContent='没有识别到订单。请复制包含“序号 / 商家名称 / 产品名称 / 数量”的完整路线区域。';el('result').hidden=true;el('previewPanel').hidden=true;return}
  el('result').hidden=false;el('previewPanel').hidden=false;
  parsingStatus='已识别 '+records.length+' 个商品，'+routeOrder.size+' 条路线，'+merchantOrder.size+' 组商家'+(missing?'；'+missing+' 项缺货已标记并包含在标签中':'')+(noQty?'；'+noQty+' 项数量为空，请检查':'')+'。';
+ const conflicts=records.filter(r=>r.weightMismatch);
+ if(conflicts.length)parsingStatus+=' ⚠ '+conflicts.length+'项重量条数与箱数不一致，请更正后重新粘贴（对应类别暂不能打印）。';
  el('status').textContent=parsingStatus;
+ el('status').style.color=conflicts.length?'#ae1d28':'';
  renderRecords();renderShortages();refresh();
 }
 
@@ -272,9 +275,9 @@ function renderRecords(){
   const r=items[0],section=document.createElement('div');section.className='group';section.style.setProperty('--accent',r.color[0]);section.style.setProperty('--pale',r.color[1]);
   let body='<div class="grouphead">'+html(r.route)+'　|　'+html(r.customer)+'（'+items.length+' 项）</div><table><thead><tr><th>印</th><th>商品</th><th>仓库</th><th>数量</th><th>标签</th></tr></thead><tbody>';
   for(const rec of items){
-   body+='<tr><td><input type="checkbox" data-id="'+rec.id+'" data-action="include" '+(rec.include?'checked':'')+'></td><td><div class="name">'+html(rec.name)+(rec.missing?' <strong style="color:#b3262e">【缺货】</strong>':'')+'</div><div class="desc">'+html(rec.spec)+'</div></td><td><select data-id="'+rec.id+'" data-action="category">';
+   body+='<tr><td><input type="checkbox" data-id="'+rec.id+'" data-action="include" '+(rec.include?'checked':'')+'></td><td><div class="name">'+html(rec.name)+(rec.missing?' <strong style="color:#b3262e">【缺货】</strong>':'')+'</div><div class="desc">'+html(rec.spec)+'</div>'+(rec.weightMismatch?'<div class="desc" style="font-weight:bold;color:#b3262e">⚠ '+html(rec.weightMismatchText)+'</div>':'')+'</td><td><select data-id="'+rec.id+'" data-action="category">';
    for(const c of ['dry','frozen','fresh'])body+='<option value="'+c+'" '+(rec.category===c?'selected':'')+'>'+names[c]+'</option>';
-   body+='</select></td><td>'+html(rec.qty||'（空）')+'</td><td>'+rec.count+'</td></tr>';
+   body+='</select></td><td>'+html(rec.qty||'（空）')+'</td><td>'+rec.count+(rec.weights.length?' / '+rec.weights.length+'个重量':'')+'</td></tr>';
   }
   body+='</tbody></table>';section.innerHTML=body;root.append(section);
  }
@@ -284,7 +287,10 @@ function refresh(){
   const list=allLabels(c),key=c[0].toUpperCase()+c.slice(1);
   el('count'+key).textContent=list.length+' 张';
   el('pages'+key).textContent=(list.length?Math.ceil((list.length+Number(el('firstSlot').value)-1)/30):0)+' 页标签纸';
-  const b=document.querySelector('[data-print="'+c+'"]');b.disabled=!list.length;b.style.opacity=list.length?'1':'.45';
+  const b=document.querySelector('[data-print="'+c+'"]');
+  const mismatch=records.some(r=>r.include&&r.category===c&&r.weightMismatch);
+  b.disabled=!list.length||mismatch;
+  b.style.opacity=b.disabled?'.45':'1';b.title=mismatch?'重量条数与箱数不一致，请更正原表并重新生成':'';
  }
  preview();
 }
@@ -317,14 +323,14 @@ function preview(){
  createPages(c,el('previewPages'));
 }
 function doPrint(c){
- if(!records.length || !allLabels(c).length)return;
+ if(!records.length || !allLabels(c).length || records.some(r=>r.include&&r.category===c&&r.weightMismatch))return;
  el('previewCategory').value=c;preview();
  createPages(c,el('printer'));
  document.title='JFT-'+names[c]+'-Label-'+el('date').value;
  window.print();
 }
 el('parse').onclick=process;
-el('reset').onclick=()=>{el('paste').value='';records.splice(0);el('result').hidden=true;el('previewPanel').hidden=true;el('status').textContent='';el('previewPages').replaceChildren();el('printer').replaceChildren()};
+el('reset').onclick=()=>{el('paste').value='';records.splice(0);el('result').hidden=true;el('previewPanel').hidden=true;el('status').textContent='';el('status').style.color='';el('previewPages').replaceChildren();el('printer').replaceChildren()};
 el('records').addEventListener('change',e=>{
  const id=Number(e.target.dataset.id),action=e.target.dataset.action,r=records[id];if(!r)return;
  if(action==='category')r.category=e.target.value;
