@@ -47,6 +47,7 @@ input[type="checkbox"]{width:17px;height:17px}
 .sticker .bottom{display:flex;justify-content:space-between;align-items:end;gap:5px;min-height:.2in}
 .sticker .piece{font-size:15pt;line-height:1;font-weight:900}
 .sticker .qty{font-size:8pt;font-weight:800;text-align:right;max-width:63%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sticker .qty.weight{font-size:10pt;color:#11233e}
 .slotEmpty{background:#fff}
 #printer{display:none}
 @page{size:letter;margin:0}
@@ -140,21 +141,42 @@ function classify(n){
  if(/chicken|鸡腿|鸡胸|鸡翅|鸡脚|鸡爪|鸡骨|pork|猪颈|猪骨|beef|牛腿|牛肉|lamb|鸭|chuck roll|inside round|eye round|shrimp|虾仁|nobashi|sushi ebi|蟹棒|crab stick|crab meat|鱿鱼|squid|clams|花蛤|octopus|章鱼|salmon|tuna|eel\b|unagi|edamame|毛豆|dumpling|饺子|spring roll|春卷|won ?ton wrap|馄饨皮|fish cake|鱼丸|鱼豆腐|masago|鱼籽|roe\b|rice cake|年糕|karaage|炸鸡|sushi ginger|寿司姜|shredded crab|海鲜|frozen|冷冻|冻货|素春卷|烧卖|流沙包/.test(x))return 'frozen';
  return 'dry';
 }
+function readWeightList(q,spec){
+ const a=valid(q),b=valid(spec),context=/(?:称重|weigh|weight|kg|公斤|lb|lbs|磅)/i.test(a+' '+b);
+ for(const raw of [a,b]){
+  if(!/[+＋]/.test(raw))continue;
+  let text=raw.replace(/＋/g,'+').replace(/（/g,'(').replace(/）/g,')').trim();
+  text=text.replace(/^\d+(?:\.\d+)?\s*(?:cases?|cs|bags?|箱|袋)(?=$|[\s+,:：]|称重)/i,'').trim();
+  text=text.replace(/^(?:称重|weigh(?:t)?|重量)\s*(?:\(\s*(?:kg|lb|公斤|磅)\s*\))?\s*[:：]?\s*/i,'').trim().replace(/^\+\s*/,'');
+  const terms=text.split('+').map(x=>x.trim().replace(/^\(/,'').replace(/\)$/,''));
+  if(terms.length<2||terms.some(x=>!x))continue;
+  const parsed=terms.map(x=>x.match(/^(\d+(?:\.\d+)?)\s*(kg|kgs|lb|lbs|公斤|磅)?$/i));
+  if(parsed.some(x=>!x)||(!context&&!parsed.some(x=>x[1].includes('.'))))continue;
+  const units=parsed.filter(x=>x[2]).map(x=>/^(lb|磅)/i.test(x[2])?'lb':'kg');
+  if(new Set(units).size>1)return {values:[],error:'同时出现 kg 和 lb，请统一单位'};
+  const unit=units[0]||(/\b(?:lb|lbs)\b|磅/i.test(b)?'lb':/(?:kg|公斤)/i.test(b)?'kg':'');
+  return {values:parsed.map(x=>x[1]+(unit?' '+unit:'')),error:null};
+ }
+ return {values:[],error:null};
+}
 function pieces(q,spec){
  const a=valid(q),b=valid(spec);
- // 箱/袋按实际件数拆标签；称重的总 kg/lb 不是标签张数。
- const parseUnits=(s)=>{
-  const m=s.match(/(?:^|[^\d.])(\d+(?:\.\d+)?)\s*(cases?|cs|bags?|箱|袋)(?![a-z])/i);
-  if(!m)return null;
-  return {number:Number(m[1]),unit:/^(bag|袋)/i.test(m[2])?'bag':'cs'};
- };
+ const parseUnits=s=>{const m=s.match(/(?:^|[^\d.])(\d+(?:\.\d+)?)\s*(cases?|cs|bags?|箱|袋)(?![a-z])/i);return m?{number:Number(m[1]),unit:/^(bag|袋)/i.test(m[2])?'bag':'cs'}:null};
  let matched=parseUnits(a);
- if(!matched && (!a||/(?:kg|lb|称重|缺货|weigh)/i.test(a)||/(?:称重|weigh)/i.test(b))){
-  matched=parseUnits(b);
+ if(!matched&&(!a||/(?:kg|lb|称重|缺货|weigh)/i.test(a)||/(?:称重|weigh)/i.test(b)))matched=parseUnits(b);
+ const list=readWeightList(a,b);
+ const count=matched&&Number.isInteger(matched.number)&&matched.number>0&&matched.number<=500?matched.number:list.values.length>1?list.values.length:1;
+ const mismatch=!!(list.error||(list.values.length>1&&matched&&matched.number!==list.values.length));
+ const mismatchText=list.error||(mismatch?'写了'+matched.number+'箱/袋，实际只有'+list.values.length+'个重量':'');
+ let weights=mismatch?[]:list.values;
+ if(!weights.length&&count===1&&/(?:称重|weigh|kg|lb|公斤|磅)/i.test(a+' '+b)){
+  const single=a.match(/^(\d+(?:\.\d+)?)\s*(kg|lb|lbs|kgs|公斤|磅)?$/i);
+  if(single){
+   const unit=single[2]?(/^(lb|磅)/i.test(single[2])?'lb':'kg'):(/\b(?:lb|lbs)\b|磅/i.test(b)?'lb':/(?:kg|公斤)/i.test(b)?'kg':'');
+   if(unit)weights=[single[1]+' '+unit];
+  }
  }
- const count=matched && Number.isInteger(matched.number) && matched.number>0 && matched.number<=500?matched.number:1;
- const quantity=matched && count>1?'1 '+matched.unit:(a||b||'1');
- return {count,unit:matched?.unit||null,quantity,overall:a||b};
+ return {count,unit:matched?.unit||null,quantity:matched&&count>1?'1 '+matched.unit:(a||b||'1'),overall:a||b,weights,mismatch,mismatchText};
 }
 function colorOf(s){
  let h=0;for(const ch of s.toLowerCase())h=((h*31)+ch.charCodeAt(0))>>>0;
@@ -205,7 +227,7 @@ function process(){
    if(!routeOrder.has(route))routeOrder.set(route,routeOrder.size);
    const mk=route+'\u241f'+customer;
    if(!merchantOrder.has(mk))merchantOrder.set(mk,merchantOrder.size);
-   records.push({id:records.length,route,customer,name:item,spec,qty,category:classify(item),count:p.count,unit:p.unit,oneQty:p.quantity,
+   records.push({id:records.length,route,customer,name:item,spec,qty,category:classify(item),count:p.count,unit:p.unit,oneQty:p.quantity,weights:p.weights,weightMismatch:p.mismatch,weightMismatchText:p.mismatchText,
     missing:noStock,include:!noStock||el('showMissing').checked,routeRank:routeOrder.get(route),merchantRank:merchantOrder.get(mk),color:colors[merchantOrder.get(mk)%colors.length]});
   }
  }
@@ -236,7 +258,7 @@ function allLabels(category){
   for(let n=0;n<r.count;n++){
    const index=(next.get(key)||0)+1;next.set(key,index);
    if(r.category!==category)continue;
-   stickerRows.push({route:r.route,customer:r.customer,name:r.name,qty:r.oneQty,spec:r.spec,sequence:index+'/'+totals.get(key),color:r.color,missing:r.missing});
+   stickerRows.push({route:r.route,customer:r.customer,name:r.name,qty:r.weights[n]||r.oneQty,weight:!!r.weights[n],spec:r.spec,sequence:index+'/'+totals.get(key),color:r.color,missing:r.missing});
   }
  }
  return stickerRows;
@@ -283,7 +305,7 @@ function createPages(category,into){
    node.innerHTML='<div class="top"><span>JFT · '+html(date)+'</span><span class="rt">'+html(shortRoute)+'</span></div>'+
     '<div class="merchant">'+html(rec.customer)+'</div>'+
     '<div class="item">'+(rec.missing?'<span class="shortage">缺货</span>':'')+html(rec.name)+'</div>'+
-    '<div class="bottom"><span class="piece">'+html(rec.sequence)+'</span><span class="qty">'+html(rec.qty)+'</span></div>';
+    '<div class="bottom"><span class="piece">'+html(rec.sequence)+'</span><span class="qty'+(rec.weight?' weight':'')+'">'+html(rec.qty)+'</span></div>';
    pg.append(node);
   }
   into.append(pg);
