@@ -159,8 +159,36 @@ function readWeightList(q,spec){
  }
  return {values:[],error:null};
 }
-function pieces(q,spec){
- const a=valid(q),b=valid(spec);
+function standardWeight(name,spec){
+ const item=valid(name),detail=valid(spec);
+ const explicit=(item+' '+detail).match(/(?:定重|fixed(?:\s+weight)?|标准净重)\s*[:：]?\s*(\d+(?:\.\d+)?)\s*(kg|kgs|公斤|lb|lbs|磅)/i);
+ if(explicit)return explicit[1]+' '+(/^(lb|磅)/i.test(explicit[2])?'lb':'kg');
+ // 标准箱重仅适用于明确标注重量的鸡类产品，不猜测其他肉的实际重量。
+ if(!/(?:chicken|鸡|ariztia)/i.test(item))return '';
+ const withUnit=item.match(/(?:^|[^\d.])(\d{1,2}(?:\.\d+)?)\s*(kg|kgs|公斤|lb|lbs|磅)(?:\s*\/\s*(?:cs|case|cases|箱))?/i);
+ if(withUnit&&Number(withUnit[1])>=8&&Number(withUnit[1])<=40){
+  return withUnit[1]+' '+(/^(lb|磅)/i.test(withUnit[2])?'lb':'kg');
+ }
+ // Ariztia 产品有时只写 18.16，不写 kg。
+ if(/(?:ariztia|chicken\s*breast|鸡胸)/i.test(item)){
+  const short=item.match(/(?:^|[^\d.])((?:18\.16|18\.14|25))(?![\d.])/i);
+  if(short)return short[1]+' kg';
+ }
+ return '';
+}
+function packsPerCase(name,spec){
+ for(const val of [valid(spec),valid(name)]){
+  const m=val.match(/(?:^|[^\d.])(\d+(?:\.\d+)?)\s*(?:packs?|pcks?|pks?)(?![a-z])/i);
+  if(m)return m[1]+' Pack';
+ }
+ return '';
+}
+function loosePackQty(q){
+ const m=valid(q).match(/(?:^|[^\d.])(\d+(?:\.\d+)?)\s*(?:packs?|pcks?|pks?)(?![a-z])/i);
+ return m?m[1]+' Pack':'';
+}
+function pieces(q,spec,name){
+ const a=valid(q),b=valid(spec),item=valid(name);
  const parseUnits=s=>{const m=s.match(/(?:^|[^\d.])(\d+(?:\.\d+)?)\s*(cases?|cs|bags?|箱|袋)(?![a-z])/i);return m?{number:Number(m[1]),unit:/^(bag|袋)/i.test(m[2])?'bag':'cs'}:null};
  let matched=parseUnits(a);
  if(!matched&&(!a||/(?:kg|lb|称重|缺货|weigh)/i.test(a)||/(?:称重|weigh)/i.test(b)))matched=parseUnits(b);
@@ -176,7 +204,13 @@ function pieces(q,spec){
    if(unit)weights=[single[1]+' '+unit];
   }
  }
- return {count,unit:matched?.unit||null,quantity:matched&&count>1?'1 '+matched.unit:(a||b||'1'),overall:a||b,weights,mismatch,mismatchText};
+ const fixed=standardWeight(item,b);
+ const casePacks=matched?.unit==='cs'?packsPerCase(item,b):'';
+ const loose=(!matched||matched.unit!=='cs')?loosePackQty(a):'';
+ let quantity=matched&&count>1?'1 '+matched.unit:(a||b||'1');
+ if(casePacks)quantity='1 cs · '+casePacks;
+ if(loose)quantity='共计 '+loose;
+ return {count,unit:matched?.unit||null,quantity,overall:a||b,weights,mismatch,mismatchText,fixedWeight:fixed,casePacks,loosePack:loose};
 }
 function colorOf(s){
  let h=0;for(const ch of s.toLowerCase())h=((h*31)+ch.charCodeAt(0))>>>0;
@@ -223,11 +257,11 @@ function process(){
    const noStock=/缺货|out\s*of\s*stock/i.test(spec+' '+qty);
    if(noStock)missing++;
    if(!qty)noQty++;
-   const p=pieces(qty,spec),route=g.route;
+   const p=pieces(qty,spec,item),route=g.route;
    if(!routeOrder.has(route))routeOrder.set(route,routeOrder.size);
    const mk=route+'\u241f'+customer;
    if(!merchantOrder.has(mk))merchantOrder.set(mk,merchantOrder.size);
-   records.push({id:records.length,route,customer,name:item,spec,qty,category:classify(item),count:p.count,unit:p.unit,oneQty:p.quantity,weights:p.weights,weightMismatch:p.mismatch,weightMismatchText:p.mismatchText,
+   records.push({id:records.length,route,customer,name:item,spec,qty,category:classify(item),count:p.count,unit:p.unit,oneQty:p.quantity,weights:p.weights,weightMismatch:p.mismatch,weightMismatchText:p.mismatchText,fixedWeight:p.fixedWeight,casePacks:p.casePacks,loosePack:p.loosePack,
     missing:noStock,include:!noStock||el('showMissing').checked,routeRank:routeOrder.get(route),merchantRank:merchantOrder.get(mk),color:colors[merchantOrder.get(mk)%colors.length]});
   }
  }
@@ -261,7 +295,7 @@ function allLabels(category){
   for(let n=0;n<r.count;n++){
    const index=(next.get(key)||0)+1;next.set(key,index);
    if(r.category!==category)continue;
-   stickerRows.push({route:r.route,customer:r.customer,name:r.name,qty:r.weights[n]||r.oneQty,weight:!!r.weights[n],spec:r.spec,sequence:index+'/'+totals.get(key),color:r.color,missing:r.missing});
+   stickerRows.push({route:r.route,customer:r.customer,name:r.name,qty:r.weights[n]||(!r.missing&&r.fixedWeight?r.fixedWeight:r.oneQty),weight:!!r.weights[n]||(!r.missing&&!!r.fixedWeight),spec:r.spec,sequence:index+'/'+totals.get(key),color:r.color,missing:r.missing});
   }
  }
  return stickerRows;
@@ -275,7 +309,7 @@ function renderRecords(){
   const r=items[0],section=document.createElement('div');section.className='group';section.style.setProperty('--accent',r.color[0]);section.style.setProperty('--pale',r.color[1]);
   let body='<div class="grouphead">'+html(r.route)+'　|　'+html(r.customer)+'（'+items.length+' 项）</div><table><thead><tr><th>印</th><th>商品</th><th>仓库</th><th>数量</th><th>标签</th></tr></thead><tbody>';
   for(const rec of items){
-   body+='<tr><td><input type="checkbox" data-id="'+rec.id+'" data-action="include" '+(rec.include?'checked':'')+'></td><td><div class="name">'+html(rec.name)+(rec.missing?' <strong style="color:#b3262e">【缺货】</strong>':'')+'</div><div class="desc">'+html(rec.spec)+'</div>'+(rec.weightMismatch?'<div class="desc" style="font-weight:bold;color:#b3262e">⚠ '+html(rec.weightMismatchText)+'</div>':'')+'</td><td><select data-id="'+rec.id+'" data-action="category">';
+   body+='<tr><td><input type="checkbox" data-id="'+rec.id+'" data-action="include" '+(rec.include?'checked':'')+'></td><td><div class="name">'+html(rec.name)+(rec.missing?' <strong style="color:#b3262e">【缺货】</strong>':'')+'</div><div class="desc">'+html(rec.spec)+'</div>'+(rec.fixedWeight?'<div class="desc">定重 '+html(rec.fixedWeight)+'/箱</div>':'')+(rec.casePacks?'<div class="desc">内装 '+html(rec.casePacks)+'/箱</div>':'')+(rec.weightMismatch?'<div class="desc" style="font-weight:bold;color:#b3262e">⚠ '+html(rec.weightMismatchText)+'</div>':'')+'</td><td><select data-id="'+rec.id+'" data-action="category">';
    for(const c of ['dry','frozen','fresh'])body+='<option value="'+c+'" '+(rec.category===c?'selected':'')+'>'+names[c]+'</option>';
    body+='</select></td><td>'+html(rec.qty||'（空）')+'</td><td>'+rec.count+(rec.weights.length?' / '+rec.weights.length+'个重量':'')+'</td></tr>';
   }
