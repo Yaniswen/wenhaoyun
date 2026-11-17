@@ -141,13 +141,20 @@ function classify(n){
  return 'dry';
 }
 function pieces(q,spec){
- let a=valid(q),b=valid(spec),m=a.match(/(?:^|\s)(\d+(?:\.\d+)?)\s*(cs|case|cases|bag|bags)\b/i);
- let unit=m?/bag/i.test(m[2])?'bag':'cs':null;
- let n=m?Number(m[1]):0;
- if(!m && (!a || /(?:kg|lb|称重|缺货)/i.test(a))){let m2=b.match(/(\d+(?:\.\d+)?)\s*(cs|case|cases|bag|bags)\b/i);if(m2){n=Number(m2[1]);unit=/bag/i.test(m2[2])?'bag':'cs';}}
- let count=unit && Number.isInteger(n) && n>0 && n<=500?n:1;
- if(count>500)return 1;
- return {count,unit,quantity:count>1?('1 '+unit):a||b||'1',overall:a||b};
+ const a=valid(q),b=valid(spec);
+ // 箱/袋按实际件数拆标签；称重的总 kg/lb 不是标签张数。
+ const parseUnits=(s)=>{
+  const m=s.match(/(?:^|[^\d.])(\d+(?:\.\d+)?)\s*(cases?|cs|bags?|箱|袋)(?![a-z])/i);
+  if(!m)return null;
+  return {number:Number(m[1]),unit:/^(bag|袋)/i.test(m[2])?'bag':'cs'};
+ };
+ let matched=parseUnits(a);
+ if(!matched && (!a||/(?:kg|lb|称重|缺货|weigh)/i.test(a)||/(?:称重|weigh)/i.test(b))){
+  matched=parseUnits(b);
+ }
+ const count=matched && Number.isInteger(matched.number) && matched.number>0 && matched.number<=500?matched.number:1;
+ const quantity=matched && count>1?'1 '+matched.unit:(a||b||'1');
+ return {count,unit:matched?.unit||null,quantity,overall:a||b};
 }
 function colorOf(s){
  let h=0;for(const ch of s.toLowerCase())h=((h*31)+ch.charCodeAt(0))>>>0;
