@@ -195,7 +195,7 @@ function loosePackQty(q){
 }
 function pieces(q,spec,name){
  const a=valid(q),b=valid(spec),item=valid(name);
- const parseUnits=s=>{const m=s.match(/(?:^|[^\d.])(\d+(?:\.\d+)?)\s*(cases?|cs|bags?|箱|袋)(?![a-z])/i);return m?{number:Number(m[1]),unit:/^(bag|袋)/i.test(m[2])?'bag':'cs'}:null};
+ const parseUnits=s=>{const m=s.match(/(?:^|[^\d.])(\d+(?:\.\d+)?)\s*(cases?|cs|bags?|btls?|bottles?|箱|袋|瓶)(?![a-z])/i);return m?{number:Number(m[1]),unit:/^(bag|袋)/i.test(m[2])?'bag':/^(btl|bottle|瓶)/i.test(m[2])?'btl':'cs'}:null};
  let matched=parseUnits(a);
  if(!matched&&(!a||/(?:kg|lb|称重|缺货|weigh)/i.test(a)||/(?:称重|weigh)/i.test(b)))matched=parseUnits(b);
  const list=readWeightList(a,b);
