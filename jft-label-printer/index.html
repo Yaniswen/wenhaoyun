@@ -94,7 +94,13 @@ input[type="checkbox"]{width:17px;height:17px}
 <div class="help">标签纸：Staples / Avery 5160、8160，Letter，每页3列×10行。请在打印机中选择 <b>Actual Size / 100%</b>、关闭页眉页脚；彩色区分商家，若黑白打印仍可看见商家名称。</div>
 </section>
 <section class="panel" id="result" hidden>
-<h2>② 分类检查并分别打印</h2>
+<h2>② 检查标签并选择打印方式</h2>
+<div class="panel" style="background:#f0f5ff;border:1px solid #cbdcf8;margin:0 0 14px;padding:14px">
+  <div class="row" style="align-items:center;justify-content:space-between">
+   <div style="flex:1;min-width:210px"><div style="font-weight:800;font-size:17px">全部标签 · 按原订单顺序连续打印</div><div class="muted" id="pagesAll" style="margin-top:5px">每条路线、每位商家的商品依次排列，不按干冻鲜拆页。</div></div>
+   <button class="primary" data-print="all" style="min-width:185px;font-size:16px">一次打印全部 Label</button>
+  </div>
+</div>
 <div class="stats">
 <div class="stat dry"><h3>干货 · Dry</h3><span class="num" id="countDry">0 张</span><span class="note" id="pagesDry"></span><button class="primary" data-print="dry">打印干货</button></div>
 <div class="stat frozen"><h3>冻货 · Frozen</h3><span class="num" id="countFrozen">0 张</span><span class="note" id="pagesFrozen"></span><button class="primary" data-print="frozen">打印冻货</button></div>
@@ -104,9 +110,9 @@ input[type="checkbox"]{width:17px;height:17px}
 <div class="field" style="max-width:230px"><label for="firstSlot">第一张从第几格开始</label>
 <select id="firstSlot"></select></div>
 <div class="field" style="max-width:200px"><label for="previewCategory">预览分类</label>
-<select id="previewCategory"><option value="dry">干货</option><option value="frozen">冻货</option><option value="fresh">鲜货</option></select></div>
+<select id="previewCategory"><option value="all">全部（订单顺序）</option><option value="dry">干货</option><option value="frozen">冻货</option><option value="fresh">鲜货</option></select></div>
 </div>
-<div class="muted" style="margin-top:9px">可以在下方逐项修改干 / 冻 / 鲜分类。相同路线、同一商家的标签会连在一起，并使用相同颜色。默认跳过“缺货”商品。</div>
+<div class="muted" style="margin-top:9px">可以在下方逐项修改干 / 冻 / 鲜分类。相同路线、同一商家的标签会连在一起，并使用相同颜色。缺货商品也会打印，并标记“缺货”。</div>
 <div id="shortages"></div><div id="records"></div>
 </section>
 <section class="panel" id="previewPanel" hidden>
@@ -128,7 +134,7 @@ const colors=[
  ['#b16786','#fbf0f5','#873d5d'],['#727fae','#eff2fc','#505d92'],
  ['#917c49','#faf6e9','#6a582d'],['#729343','#f4faeb','#537020'],
  ['#bd6c55','#fff0e9','#954730'],['#64869c','#eef5f8','#47677e']];
-const names={dry:'干货',frozen:'冻货',fresh:'鲜货'};
+const names={all:'全部',dry:'干货',frozen:'冻货',fresh:'鲜货'};
 const records=[];
 let groupCounter=0,parsingStatus='';
 const valid=x=>{let s=String(x==null?'':x).trim();return s.toLowerCase()==='null'?'':s};
@@ -294,7 +300,7 @@ function allLabels(category){
   const key=r.route+'\u241f'+r.customer;
   for(let n=0;n<r.count;n++){
    const index=(next.get(key)||0)+1;next.set(key,index);
-   if(r.category!==category)continue;
+   if(category!=='all'&&r.category!==category)continue;
    stickerRows.push({route:r.route,customer:r.customer,name:r.name,qty:r.weights[n]||(!r.missing&&r.fixedWeight?r.fixedWeight:r.oneQty),weight:!!r.weights[n]||(!r.missing&&!!r.fixedWeight),spec:r.spec,sequence:index+'/'+totals.get(key),color:r.color,missing:r.missing});
   }
  }
@@ -317,6 +323,12 @@ function renderRecords(){
  }
 }
 function refresh(){
+ const all=allLabels('all'),hasAnyConflict=records.some(r=>r.include&&r.weightMismatch);
+ const allButton=document.querySelector('[data-print="all"]');
+ allButton.disabled=!all.length||hasAnyConflict;
+ allButton.style.opacity=allButton.disabled?'.45':'1';
+ allButton.title=hasAnyConflict?'部分订单的重量条数与箱数不一致，请更正后重新生成':'';
+ el('pagesAll').textContent=all.length+' 张标签 · '+(all.length?Math.ceil((all.length+Number(el('firstSlot').value)-1)/30):0)+' 页 Letter 纸 · 按路线 / 商家 / 原商品顺序'+(hasAnyConflict?' · 请先处理重量不一致的商品':'');
  for(const c of ['dry','frozen','fresh']){
   const list=allLabels(c),key=c[0].toUpperCase()+c.slice(1);
   el('count'+key).textContent=list.length+' 张';
@@ -357,7 +369,7 @@ function preview(){
  createPages(c,el('previewPages'));
 }
 function doPrint(c){
- if(!records.length || !allLabels(c).length || records.some(r=>r.include&&r.category===c&&r.weightMismatch))return;
+ if(!records.length || !allLabels(c).length || records.some(r=>r.include&&(c==='all'||r.category===c)&&r.weightMismatch))return;
  el('previewCategory').value=c;preview();
  createPages(c,el('printer'));
  document.title='JFT-'+names[c]+'-Label-'+el('date').value;
