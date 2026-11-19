@@ -341,11 +341,20 @@ async function pdfRasterPage(items,index,total,summaryPages,allPages){
   pdfRound(ctx,ix,iy,iw,ih,7,'#e8f2ea',null);
   if(instock&&ph.length){
    try{
-    var img=await pdfLoadImage(ph[0].id);
-    ctx.save();
-    ctx.beginPath();ctx.rect(ix,iy,iw,ih);ctx.clip();
-    pdfCover(ctx,img,ix,iy,iw,ih);
-    ctx.restore();img.src='';
+    var totalPhotos=Math.min(3,ph.length);
+    for(var pi=0;pi<totalPhotos;pi++){
+     try{
+      var img=await pdfLoadImage(ph[pi].id);
+      var dx=ix,dy=iy,dw=iw,dh=ih,gap=3;
+      if(totalPhotos===2){dw=(iw-gap)/2;dx=ix+pi*(dw+gap);}
+      if(totalPhotos===3){
+       if(pi===0){dw=(iw-gap)*.58;}
+       else{dx=ix+(iw-gap)*.58+gap;dw=iw-(iw-gap)*.58-gap;dh=(ih-gap)/2;dy=iy+(pi-1)*(dh+gap);}
+      }
+      ctx.save();ctx.beginPath();ctx.rect(dx,dy,dw,dh);ctx.clip();
+      pdfCover(ctx,img,dx,dy,dw,dh);ctx.restore();img.src='';
+     }catch(photoError){failed++;}
+    }
    }catch(err){failed++;ctx.fillStyle='#8f9d94';ctx.font='bold 13px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('PHOTO UNAVAILABLE',ix+iw/2,iy+ih/2);ctx.textAlign='left';}
   }else{
    ctx.fillStyle='#8b9f93';ctx.font='bold 17px Arial, sans-serif';ctx.textAlign='center';
