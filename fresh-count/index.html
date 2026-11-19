@@ -7,11 +7,11 @@
 </head><body><div class="top"><div class="topin"><div class="brand">JFT <span>Food Distribution</span> <span class="tiny muted">· Fresh Count</span></div><div class="right"><span id="headerInfo" class="tiny muted">独立盘点 · 不写回联合出单表</span><button id="changePinBtn" class="outline hidden" style="padding:7px 11px" onclick="changePin()">修改口令</button><button id="logout" class="outline hidden" style="padding:7px 11px" onclick="logout()">退出</button></div></div></div>
 <div id="login" class="page"><div class="panel login"><h2>🥬 蔬菜库存盘点</h2><p class="muted small">逐项盘点 · 拍照留档 · Excel / 12项每页 PDF</p><label>仓库访问口令</label><input id="pin" type="password" placeholder="输入仓库口令" autocomplete="off"><button class="primary" style="width:100%;margin-top:12px" onclick="login()">进入盘点系统</button><div id="loginError" class="alert hidden" style="margin-top:12px"></div></div></div>
 <div id="app" class="page hidden"><div class="panel" style="margin-bottom:14px"><div class="headrow"><div><b id="sessionTitle">当前盘点</b><div class="muted tiny" id="sessionSub"></div></div><div class="right"><select id="batchHistory" class="hist" onchange="chooseHistory(this.value)"></select><button class="outline" onclick="reloadState()">刷新</button><button class="outline" onclick="startBatch(true)">新一轮</button></div></div><div id="startPanel" class="hidden" style="margin-top:12px"><label>盘点人 Rep</label><input id="rep" placeholder="例如：Hu"><button class="primary" style="margin-top:9px;width:100%" onclick="startBatch(false)">开始第一轮盘点</button></div><div id="stats" class="counter"></div><div class="bar"><div id="progress" style="width:0"></div></div><div class="actions" style="margin-top:12px"><button class="primary" onclick="exportPDF()">📷 汇总＋照片 PDF</button><button class="outline" onclick="exportTablePDF()">📄 仅表格 PDF</button><button class="outline" onclick="exportExcel()">📊 导出 Excel</button></div></div><div class="layout"><div class="panel"><div class="headrow"><b>商品清单</b><span class="muted tiny" id="itemTotal"></span></div><input id="search" placeholder="🔎 模糊搜索名称、品牌、中文、规格" style="margin-top:11px" oninput="renderList()"><div class="right" style="margin-top:8px"><button class="outline small" style="padding:8px" onclick="filterBy('all')">全部</button><button class="outline small" style="padding:8px" onclick="filterBy('todo')">未盘</button><button class="outline small" style="padding:8px" onclick="filterBy('done')">已盘</button></div><div class="list" id="itemList"></div></div><div class="panel" id="editor"><div class="muted">请选择商品开始盘点。</div></div></div><div class="tiny muted" style="margin:15px 3px">照片仅保存在私有空间。未盘商品导出为 0，但在盘点明细中明确标记「未盘」，与确认无货区分。</div></div>
-<div id="toast" class="msg hidden"></div><input id="camera" type="file" accept="image/*" capture="environment" class="hidden" onchange="pickedPhoto(this)"><input id="gallery" type="file" accept="image/*" class="hidden" onchange="pickedPhoto(this)">
+<div id="toast" class="msg hidden"></div><input id="camera" type="file" accept="image/*" capture="environment" class="hidden" onchange="pickedPhoto(this)"><input id="gallery" type="file" accept="image/*" multiple class="hidden" onchange="pickedPhoto(this)">
 <script>
 'use strict';
 const API_BASE='https://oiytsycjzshksuoyjqxd.supabase.co/functions/v1/jft-fresh-count';
-var state=null,current=null,cred='',filter='all',queuedFile=null,queuedPreview='',thumbUrls={},busy=false;
+var state=null,current=null,cred='',filter='all',queuedPhotos=[],thumbUrls={},busy=false;
 var $=id=>document.getElementById(id);
 function esc(v){return String(v===null||v===undefined?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function notify(s){var x=$('toast');x.textContent=s;x.classList.remove('hidden');setTimeout(()=>x.classList.add('hidden'),3900);}
@@ -73,7 +73,7 @@ function renderList(){
 function nextUncounted(){var all=state.items;var i=all.findIndex(x=>Number(x.id)===Number(current));return all.slice(i+1).concat(all.slice(0,i+1)).find(x=>!getCount(x.id));}
 function selectedValue(id,def){var el=$(id);return el?el.value:def;}
 function showItem(id){
- current=id;queuedFile=null;if(queuedPreview){URL.revokeObjectURL(queuedPreview);queuedPreview='';}
+ if(Number(current)!==Number(id))clearQueuedPhotos();current=id;
  var it=state.items.find(x=>Number(x.id)===Number(id)),c=getCount(id),ps=getPhotos(id),ro=readOnly();
  if(!it){$('editor').innerHTML='<p>没有选中商品</p>';return;}
  var fmt=(x)=>x===null||x===undefined?'':String(x);
@@ -85,11 +85,12 @@ function showItem(id){
  '<div class="inputrow" style="margin-top:11px"><div><label>等级或批次 1</label><input id="g1" value="'+esc(c?c.grade1:'No.1')+'" '+(ro?'disabled':'')+'></div><div><label>数量</label><input id="q1" inputmode="decimal" type="number" step=".001" min="0" value="'+esc(c?fmt(c.qty1):'')+'" '+(ro?'disabled':'')+'></div><div><label>单位</label><input id="u1" value="'+esc(c?c.unit1:it.unit)+'" '+(ro?'disabled':'')+'></div></div>'+
  '<div class="inputrow" style="margin-top:11px"><div><label>等级或批次 2</label><input id="g2" value="'+esc(c?c.grade2:'No.2')+'" '+(ro?'disabled':'')+'></div><div><label>数量</label><input id="q2" inputmode="decimal" type="number" step=".001" min="0" placeholder="可不填" value="'+esc(c&&Number(c.qty2)>0?fmt(c.qty2):'')+'" '+(ro?'disabled':'')+'></div><div><label>单位</label><input id="u2" value="'+esc(c?c.unit2:it.unit)+'" '+(ro?'disabled':'')+'></div></div>'+
  '<div class="inputrow" style="margin-top:11px"><div><label>等级或批次 3</label><input id="g3" placeholder="可选：No.3 / 批次号" value="'+esc(c?c.grade3||'':'')+'" '+(ro?'disabled':'')+'></div><div><label>数量</label><input id="q3" inputmode="decimal" type="number" step=".001" min="0" placeholder="可不填" value="'+esc(c&&Number(c.qty3)>0?fmt(c.qty3):'')+'" '+(ro?'disabled':'')+'></div><div><label>单位</label><input id="u3" value="'+esc(c?c.unit3||it.unit:it.unit)+'" '+(ro?'disabled':'')+'></div></div>'+
- '<div class="foto"><div class="camera">📷</div><b>当前商品照片</b><p class="muted tiny" style="margin:5px 0">有库存至少 1 张，最多 3 张；自动压缩上传</p>'+
- (ro?'':'<div class="links"><button class="outline" onclick="openCamera()">拍照</button><button class="outline" onclick="$(\'gallery\').click()">从相册选择</button></div>')+
+ '<div class="foto"><div class="camera">📷</div><b>当前商品照片</b><p class="muted tiny" style="margin:5px 0">有库存至少 1 张，每项最多 3 张；可连续拍照或从相册多选</p>'+
+ (ro?'':'<div class="links"><button class="outline" onclick="openCamera()">📸 继续拍照</button><button class="outline" onclick="$(\'gallery\').click()">🖼️ 从相册多选</button></div>')+
  '<div id="queued" class="tiny"></div><div class="thumbnails" id="photos"></div></div>'+
  '<div class="actions">'+(ro?'':'<button class="primary" onclick="saveCurrent(false)">💾 保存并下一项</button><button class="warn" onclick="saveCurrent(true)">无库存 0</button>')+'<button class="outline" onclick="jumpNext()">跳过 / 下一项</button></div>';
  loadThumbs(ps,ro);
+ renderQueuedPhotos();
  renderList();
 }
 async function loadThumbs(ps,ro){
@@ -103,25 +104,100 @@ async function loadThumbs(ps,ro){
 }
 async function imageBlobUrl(id){if(thumbUrls[id])return thumbUrls[id];var r=await fetch(API_BASE+'?action=image&id='+encodeURIComponent(id),{headers:{'X-JFT-Pin':cred}});if(!r.ok)throw Error('照片无法加载');return thumbUrls[id]=URL.createObjectURL(await r.blob());}
 function openCamera(){$('camera').click();}
+function clearQueuedPhotos(){
+ for(var p of queuedPhotos){if(p.preview)URL.revokeObjectURL(p.preview);}
+ queuedPhotos=[];
+}
+function renderQueuedPhotos(){
+ var target=$('queued');
+ if(!target)return;
+ var stored=getPhotos(current).length,queued=queuedPhotos.length;
+ var markup='<p class="muted tiny" style="margin:8px 0">已上传 '+stored+' 张 · 待上传 '+queued+' 张 · 上限 3 张</p>';
+ if(queued){
+  markup+='<div class="thumbnails">'+queuedPhotos.map((p,i)=>
+   '<div class="thumb"><div class="photo-label">待上传 '+(i+1)+'</div><img alt="待上传照片" src="'+esc(p.preview)+'"><div><button class="danger" onclick="removeQueuedPhoto('+i+')">移除</button></div></div>').join('')+'</div>'+
+   '<p class="tiny muted">保存数量时会一起上传；如果数量早已保存，可只补传照片。</p>'+
+   (getCount(current)&&!readOnly()?'<button class="outline" onclick="uploadPhotosOnly()">📷 仅上传照片，不改数量</button>':'');
+ }
+ target.innerHTML=markup;
+}
+function removeQueuedPhoto(index){
+ if(busy||readOnly())return;
+ var p=queuedPhotos.splice(index,1)[0];
+ if(p&&p.preview)URL.revokeObjectURL(p.preview);
+ renderQueuedPhotos();
+}
 async function pickedPhoto(input){
- var f=input.files&&input.files[0];input.value='';if(!f)return;
- try{setBusy(true);queuedFile=await compress(f);if(queuedPreview)URL.revokeObjectURL(queuedPreview);queuedPreview=URL.createObjectURL(queuedFile);
- $('queued').innerHTML='<div style="margin-top:10px"><img src="'+esc(queuedPreview)+'" style="max-width:160px;max-height:125px;border-radius:8px"><p>✅ 照片已准备，保存商品时上传 ('+Math.round(queuedFile.size/1024)+'KB)</p></div>';
- }catch(e){notify('图片处理失败：'+e.message);}finally{setBusy(false);}
+ var files=Array.from(input.files||[]);
+ input.value='';
+ if(!files.length||busy||readOnly()||!state.batch)return;
+ var remaining=3-getPhotos(current).length-queuedPhotos.length;
+ if(remaining<=0)return notify('这个 Item 已有 3 张照片，先删除旧照片才能继续拍');
+ if(files.length>remaining)notify('这个 Item 还可上传 '+remaining+' 张，超出的照片未加入');
+ try{
+  setBusy(true);
+  for(var file of files.slice(0,remaining)){
+   var photo=await compress(file);
+   queuedPhotos.push({file:photo,preview:URL.createObjectURL(photo)});
+  }
+  renderQueuedPhotos();
+ }catch(e){renderQueuedPhotos();notify('照片处理失败：'+e.message);}
+ finally{setBusy(false);}
+}
+async function uploadQueuedPhotos(batchId,itemId){
+ var sent=0;
+ while(queuedPhotos.length){
+  var p=queuedPhotos[0],form=new FormData();
+  form.append('batchId',batchId);
+  form.append('itemId',String(itemId));
+  form.append('grade',$('g1').value);
+  form.append('file',p.file,'fresh.jpg');
+  await api('photo',form);
+  if(p.preview)URL.revokeObjectURL(p.preview);
+  queuedPhotos.shift();sent++;
+ }
+ return sent;
+}
+async function uploadPhotosOnly(){
+ if(busy||readOnly()||!state.batch||!getCount(current)||!queuedPhotos.length)return;
+ var itemId=current,batchId=state.batch.id;
+ try{
+  setBusy(true);
+  var sent=await uploadQueuedPhotos(batchId,itemId);
+  await loadState(batchId);
+  showItem(itemId);
+  notify('这个 Item 已新增 '+sent+' 张照片');
+ }catch(e){
+  try{state=await api('state&batch='+encodeURIComponent(batchId),null,'GET');loadThumbs(getPhotos(itemId),false);renderList();}catch(_){}
+  renderQueuedPhotos();
+  notify('照片未全部上传，请重试：'+e.message);
+ }finally{setBusy(false);}
 }
 async function compress(file){return new Promise((resolve,reject)=>{
  var img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{try{var ratio=Math.min(1,1600/Math.max(img.width,img.height));var can=document.createElement('canvas');can.width=Math.round(img.width*ratio);can.height=Math.round(img.height*ratio);can.getContext('2d').drawImage(img,0,0,can.width,can.height);can.toBlob(b=>{URL.revokeObjectURL(url);if(b)resolve(new File([b],'fresh.jpg',{type:'image/jpeg'}));else reject(Error('不能压缩照片'));},'image/jpeg',.75);}catch(e){URL.revokeObjectURL(url);reject(e);}};img.onerror=()=>{URL.revokeObjectURL(url);reject(Error('不支持的图片格式'));};img.src=url;});}
 async function saveCurrent(zero){
- if(busy||readOnly())return;var it=state.items.find(x=>Number(x.id)===Number(current));var photos=getPhotos(current);
+ if(busy||readOnly())return;
+ var it=state.items.find(x=>Number(x.id)===Number(current));if(!it)return;
+ var photos=getPhotos(current),batchId=state.batch.id,itemId=current;
  var q1=Number($('q1').value||0),q2=Number($('q2').value||0),q3=Number($('q3').value||0);
  if(!zero&&$('q1').value===''&&$('q2').value===''&&$('q3').value==='')return notify('请输入数量；无货请点「无库存 0」');
- if(!zero&&q1+q2+q3>0&&!queuedFile&&!photos.length)return notify('有库存的商品需要至少拍一张照片');
- try{setBusy(true);
-  await api('save',{batchId:state.batch.id,itemId:current,grade1:$('g1').value,qty1:q1,unit1:$('u1').value,grade2:$('g2').value,qty2:q2,unit2:$('u2').value,grade3:$('g3').value,qty3:q3,unit3:$('u3').value,zero:zero});
-  if(!zero&&queuedFile){var form=new FormData();form.append('batchId',state.batch.id);form.append('itemId',current);form.append('grade',$('g1').value);form.append('file',queuedFile,'fresh.jpg');await api('photo',form);}
-  var old=current;await loadState(state.batch.id);
-  var next=nextUncounted();if(next){showItem(next.id);notify('已保存 #'+old+'，进入下一项');}else{showItem(old);notify('已保存！所有商品都已盘点或可以手动选择');}
- }catch(e){notify('未完成保存：'+e.message);}finally{setBusy(false);}
+ if(!zero&&q1+q2+q3>0&&queuedPhotos.length===0&&photos.length===0)return notify('有库存的商品需要至少拍一张照片');
+ if(!zero&&photos.length+queuedPhotos.length>3)return notify('每个 Item 最多 3 张照片');
+ if(zero&&queuedPhotos.length&&!confirm('已有待上传照片。确定将商品记为无库存且不上传照片？'))return;
+ try{
+  setBusy(true);
+  await api('save',{batchId,itemId,grade1:$('g1').value,qty1:q1,unit1:$('u1').value,grade2:$('g2').value,qty2:q2,unit2:$('u2').value,grade3:$('g3').value,qty3:q3,unit3:$('u3').value,zero});
+  var sent=zero?0:await uploadQueuedPhotos(batchId,itemId);
+  if(zero)clearQueuedPhotos();
+  await loadState(batchId);
+  var next=nextUncounted();
+  if(next){showItem(next.id);notify('已保存，上传 '+sent+' 张照片；进入下一项');}
+  else{showItem(itemId);notify('已保存，上传 '+sent+' 张照片');}
+ }catch(e){
+  try{state=await api('state&batch='+encodeURIComponent(batchId),null,'GET');loadThumbs(getPhotos(itemId),false);renderList();}catch(_){}
+  renderQueuedPhotos();
+  notify('保存未全部完成，请重试：'+e.message);
+ }finally{setBusy(false);}
 }
 async function deletePhoto(id){if(!confirm('确认删除这张照片？'))return;try{setBusy(true);await api('delete-photo',{id,batchId:state.batch.id});if(thumbUrls[id]){URL.revokeObjectURL(thumbUrls[id]);delete thumbUrls[id];}await loadState(state.batch.id);notify('已删除照片');}catch(e){notify(e.message);}finally{setBusy(false);}}
 function jumpNext(){if(!state||!state.items.length)return;var i=state.items.findIndex(x=>Number(x.id)===Number(current));showItem(state.items[(i+1)%state.items.length].id);}
