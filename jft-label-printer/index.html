@@ -508,6 +508,7 @@ document.querySelectorAll('[data-print]').forEach(btn=>btn.addEventListener('cli
 /* Separate incoming-stock label generator: it never changes order records. */
 const arrivalRows=[];
 let arrivalIssue='';
+const arrivalEditErrors=new Map();
 const arrivalUnitNames={cs:'CASE',bag:'BAG',btl:'BTL',box:'BOX',pack:'PACK',pcs:'PCS'};
 const arrivalUnitOptions={cs:'Case / cs / 箱',bag:'Bag / 袋',btl:'Bottle / 瓶',box:'Box / 盒',pack:'Pack / 包',pcs:'Pcs / 个'};
 const arrivalSlot=el('arrivalFirstSlot');
@@ -581,7 +582,7 @@ function arrivalTable(){
 }
 function renderArrivalPages(into){
  into.replaceChildren();
- if(arrivalIssue)return;
+ if(arrivalIssue||arrivalEditErrors.size)return;
  const items=arrivalStickerRows(),start=Number(el('arrivalFirstSlot').value)-1;
  if(!items.length)return;
  const pages=Math.ceil((items.length+start)/30),vertical=el('arrivalLayout').value==='column';
@@ -603,16 +604,17 @@ function renderArrivalPages(into){
 }
 function refreshArrival(){
  const total=arrivalLabelCount(),start=Number(el('arrivalFirstSlot').value)-1;
- const hasError=!!arrivalIssue||total>3000||!arrivalRows.length;
+ const issues=[arrivalIssue,...arrivalEditErrors.values()].filter(Boolean).join('\n');
+ const hasError=!!issues||total>3000||!arrivalRows.length;
  el('arrivalStatus').textContent=arrivalRows.length+' 种商品 · '+total+' 张标签 · '+(total?Math.ceil((total+start)/30):0)+' 页 Letter 纸';
- el('arrivalError').textContent=arrivalIssue||(total>3000?'一次最多打印3000张，请减少数量':'');
+ el('arrivalError').textContent=issues||(total>3000?'一次最多打印3000张，请减少数量':'');
  el('arrivalPrint').disabled=hasError;
  el('arrivalPrint').style.opacity=hasError?'.4':'1';
  el('arrivalPreviewInfo').textContent=total+' 张标签 · '+(el('arrivalLayout').value==='column'?'竖排':'横排')+' · 第'+el('arrivalFirstSlot').value+'格开始';
  renderArrivalPages(el('arrivalPreviewPages'));
 }
 function generateArrival(){
- arrivalRows.splice(0);arrivalIssue='';
+ arrivalRows.splice(0);arrivalIssue='';arrivalEditErrors.clear();
  const lines=el('arrivalPaste').value.replace(/\r/g,'').split('\n'),errors=[];
  for(let i=0;i<lines.length;i++){
   if(!lines[i].trim())continue;
@@ -627,7 +629,7 @@ function generateArrival(){
 }
 el('arrivalGenerate').addEventListener('click',generateArrival);
 el('arrivalClear').addEventListener('click',()=>{
- el('arrivalPaste').value='';arrivalRows.splice(0);arrivalIssue='';
+ el('arrivalPaste').value='';arrivalRows.splice(0);arrivalIssue='';arrivalEditErrors.clear();
  el('arrivalResult').hidden=true;el('arrivalPreviewPanel').hidden=true;
  el('arrivalStatus').textContent='';el('arrivalError').textContent='';
  el('arrivalItems').replaceChildren();el('arrivalPreviewPages').replaceChildren();el('printer').replaceChildren();
@@ -651,13 +653,15 @@ el('arrivalItems').addEventListener('change',event=>{
   if(!arrivalUnitNames[text])message='数量单位不支持';
   else row.unit=text;
  }
- arrivalIssue=message?('第'+(index+1)+'行：'+message):'';
+ const editKey=index+':'+field;
+ if(message)arrivalEditErrors.set(editKey,'第'+(index+1)+'行：'+message);
+ else arrivalEditErrors.delete(editKey);
  refreshArrival();
 });
 el('arrivalLayout').addEventListener('change',()=>{arrivalSlotTitles();refreshArrival()});
 el('arrivalFirstSlot').addEventListener('change',refreshArrival);
 el('arrivalPrint').addEventListener('click',()=>{
- if(arrivalIssue||!arrivalRows.length||arrivalLabelCount()>3000)return;
+ if(arrivalIssue||arrivalEditErrors.size||!arrivalRows.length||arrivalLabelCount()>3000)return;
  renderArrivalPages(el('printer'));
  document.title='JFT-Incoming-Labels';
  window.print();
