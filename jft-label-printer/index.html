@@ -70,11 +70,37 @@ input[type="checkbox"]{width:17px;height:17px}
  .panel{padding:13px}
  header{padding:17px}
 }
+
+/* Order labels and incoming product labels use the same printable Avery 5160 sheet. */
+.mode-tabs{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:16px}
+.mode-tab{border:1px solid #cbd5e3;background:#e9eef7;color:#34465f;font-size:14px}
+.mode-tab.active{background:#173d73;color:#fff;border-color:#173d73}
+#orderMode[hidden],#arrivalMode[hidden]{display:none!important}
+.arrival-entry{height:155px;line-height:1.55}
+#arrivalItems{margin-top:12px;overflow:auto}
+#arrivalItems input,#arrivalItems select{padding:7px;font-size:12px}
+#arrivalItems .arr-name{min-width:160px;width:100%}
+#arrivalItems .arr-date{min-width:90px;max-width:115px}
+#arrivalItems .arr-count{min-width:64px;max-width:85px}
+#arrivalItems .arr-unit{min-width:75px;max-width:100px}
+.arrival-sticker{background:#fff}
+.arrival-sticker .arr-top{display:flex;justify-content:space-between;gap:5px;font-size:6pt;line-height:1.2;color:#536171;font-weight:700;white-space:nowrap}
+.arrival-sticker .arr-name{font-weight:900;font-size:11.5pt;line-height:1.08;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;overflow-wrap:anywhere;color:#0f1722}
+.arrival-sticker .arr-bottom{display:flex;align-items:end;justify-content:space-between;gap:5px}
+.arrival-sticker .arr-date-block{display:flex;align-items:baseline;gap:6px;min-width:0}
+.arrival-sticker .arr-date-label{font-size:6pt;font-weight:700;color:#536171}
+.arrival-sticker .arr-date-value{font-size:14pt;font-weight:900;color:#141c29;white-space:nowrap}
+.arrival-sticker .arr-sequence{font-size:12pt;font-weight:900;color:#17263c;white-space:nowrap}
 </style>
 </head>
 <body>
 <header><h1>JFT Food Distribution · Label Printer</h1><p>白底彩色竖条区分商家 · 绿鲜 / 蓝冻 / 黄干 · 可分类或按顺序全部打印</p></header>
 <main>
+<div class="mode-tabs" role="group" aria-label="打印功能">
+ <button type="button" class="mode-tab active" data-mode="order" aria-pressed="true">① 订单配送 Label</button>
+ <button type="button" class="mode-tab" data-mode="arrival" aria-pressed="false">② 到货商品 Label</button>
+</div>
+<div id="orderMode">
 <section class="panel">
 <h2>① 粘贴联合出单表</h2>
 <div class="row">
@@ -124,6 +150,40 @@ input[type="checkbox"]{width:17px;height:17px}
 <div class="previewNotice" id="previewInfo"></div>
 <div id="previewWrap"><div id="previewPages"></div></div>
 </section>
+
+</div>
+<div id="arrivalMode" hidden>
+<section class="panel">
+ <h2>到货商品标签 · Incoming Product Labels</h2>
+ <p class="muted">没有厂家标签的商品，可以自己输入产品名称、到货日期和数量。同一种商品按箱数生成独立贴纸，多种商品连续打印。无需填写商家或路线。</p>
+ <label for="arrivalPaste" style="display:block;font-size:13px;font-weight:700;margin:11px 0 7px">每行一个商品：产品名称　到货日期　数量单位</label>
+ <textarea id="arrivalPaste" class="arrival-entry" spellcheck="false" placeholder="Green Pepper XXL 11.19 50Case&#10;Dole Iceberg Lettuce 11.20 5cs&#10;AAA Iceberg Lettuce 10.19 3cs"></textarea>
+ <div class="muted" style="margin-top:7px">日期支持 11.19 / 11-19 / 2026-11-19；数量支持 Case、cs、箱、bag、btl、box、pack 等。每个实物单位打印1张标签。</div>
+ <div class="row" style="margin-top:12px">
+  <button class="primary" id="arrivalGenerate">生成到货标签</button>
+  <button class="secondary" id="arrivalClear">清空</button>
+ </div>
+ <div id="arrivalStatus" class="status" role="status"></div>
+ <div id="arrivalError" class="status" style="color:#b42330;white-space:pre-wrap"></div>
+</section>
+<section class="panel" id="arrivalResult" hidden>
+ <h2>检查和编辑商品</h2>
+ <p class="muted">可以直接修改商品名称、到货日期和件数。修改后自动重新生成预览。</p>
+ <div id="arrivalItems"></div>
+ <div class="row" style="margin-top:12px">
+  <div class="field" style="max-width:260px"><label for="arrivalLayout">标签排列</label>
+  <select id="arrivalLayout"><option value="column">竖排 · 先从上到下，再向右</option><option value="row">横排 · 先从左到右，再向下</option></select></div>
+  <div class="field" style="max-width:270px"><label for="arrivalFirstSlot">从第几格开始</label><select id="arrivalFirstSlot"></select></div>
+  <button class="primary" id="arrivalPrint" style="font-size:16px;min-width:170px">一次打印全部到货 Label</button>
+ </div>
+ <div class="help">使用 Avery 5160 / 8160，Letter，每页30张。建议打印时选择 Actual Size / 100%，关闭页眉页脚。</div>
+</section>
+<section class="panel" id="arrivalPreviewPanel" hidden>
+ <h2>到货标签预览（实物纸张比例）</h2>
+ <div class="previewNotice" id="arrivalPreviewInfo"></div>
+ <div id="previewWrap"><div id="arrivalPreviewPages"></div></div>
+</section>
+</div>
 </main>
 <div id="printer"></div>
 <script>
@@ -444,6 +504,175 @@ el('firstSlot').addEventListener('change',refresh);
 el('layoutOrder').addEventListener('change',()=>{updateSlotDescriptions();refresh()});
 el('previewCategory').addEventListener('change',preview);
 document.querySelectorAll('[data-print]').forEach(btn=>btn.addEventListener('click',()=>doPrint(btn.dataset.print)));
+
+/* Separate incoming-stock label generator: it never changes order records. */
+const arrivalRows=[];
+let arrivalIssue='';
+const arrivalUnitNames={cs:'CASE',bag:'BAG',btl:'BTL',box:'BOX',pack:'PACK',pcs:'PCS'};
+const arrivalUnitOptions={cs:'Case / cs / 箱',bag:'Bag / 袋',btl:'Bottle / 瓶',box:'Box / 盒',pack:'Pack / 包',pcs:'Pcs / 个'};
+const arrivalSlot=el('arrivalFirstSlot');
+for(let i=1;i<=30;i++){const opt=document.createElement('option');opt.value=i;arrivalSlot.append(opt)}
+function arrivalSlotTitles(){
+ const vertical=el('arrivalLayout').value==='column';
+ for(let i=0;i<30;i++){
+  const col=vertical?Math.floor(i/10):i%3,row=vertical?i%10:Math.floor(i/3);
+  arrivalSlot.children[i].textContent='第 '+(i+1)+' 格 · 第'+(col+1)+'列第'+(row+1)+'行';
+ }
+}
+arrivalSlotTitles();
+function canonicalArrivalDate(raw){
+ const value=String(raw||'').trim(),parts=value.split(/[./-]/);
+ if(parts.length!==2&&parts.length!==3)return null;
+ if(parts.some(p=>!/^\d{1,4}$/.test(p)))return null;
+ const nums=parts.map(Number),y=nums.length===3?nums[0]:new Date().getFullYear();
+ const m=nums.length===3?nums[1]:nums[0],d=nums.length===3?nums[2]:nums[1];
+ if(y<2000||y>2100||m<1||m>12||d<1||d>31)return null;
+ const date=new Date(y,m-1,d);
+ if(date.getFullYear()!==y||date.getMonth()!==m-1||date.getDate()!==d)return null;
+ const mm=String(m).padStart(2,'0'),dd=String(d).padStart(2,'0');
+ return parts.length===3?y+'.'+mm+'.'+dd:mm+'.'+dd;
+}
+function arrivalUnit(s){
+ if(/^(?:cases?|cs|箱)$/i.test(s))return 'cs';
+ if(/^(?:bags?|袋)$/i.test(s))return 'bag';
+ if(/^(?:btls?|bottles?|瓶)$/i.test(s))return 'btl';
+ if(/^(?:boxes?|盒)$/i.test(s))return 'box';
+ if(/^(?:packs?|pcks?|pks?|包)$/i.test(s))return 'pack';
+ if(/^(?:pcs?|pieces?|个)$/i.test(s))return 'pcs';
+ return null;
+}
+function parseIncomingLine(line,no){
+ const text=String(line).trim().replace(/\s+/g,' ');
+ if(!text)return null;
+ const m=text.match(/^(.*?)\s+(\d{1,4}[./-]\d{1,2}(?:[./-]\d{1,2})?)\s+(\d{1,4})\s*(cases?|cs|bags?|btls?|bottles?|boxes?|packs?|pcks?|pks?|pieces?|pcs?|箱|袋|瓶|盒|包|个)$/i);
+ if(!m||!m[1].trim())throw Error('第'+no+'行格式不正确：'+text);
+ const date=canonicalArrivalDate(m[2]),count=Number(m[3]),unit=arrivalUnit(m[4]);
+ if(!date)throw Error('第'+no+'行到货日期不合法：'+m[2]);
+ if(!Number.isSafeInteger(count)||count<1||count>1500)throw Error('第'+no+'行数量必须是1–1500的整数');
+ if(!unit)throw Error('第'+no+'行数量单位不支持');
+ return {name:m[1].trim(),date,count,unit};
+}
+function arrivalLabelCount(){return arrivalRows.reduce((s,x)=>s+x.count,0)}
+function arrivalStickerRows(){
+ const result=[];
+ for(let rowIndex=0;rowIndex<arrivalRows.length;rowIndex++){
+  const row=arrivalRows[rowIndex];
+  for(let n=1;n<=row.count;n++){
+   result.push({name:row.name,date:row.date,unit:row.unit,sequence:n+'/'+row.count,color:colors[rowIndex%colors.length][0]});
+  }
+ }
+ return result;
+}
+function arrivalTable(){
+ const list=el('arrivalItems');
+ list.replaceChildren();
+ let h='<table><thead><tr><th>商品名称（可修改）</th><th>到货日期</th><th>张数</th><th>单位</th></tr></thead><tbody>';
+ for(let i=0;i<arrivalRows.length;i++){
+  const row=arrivalRows[i];
+  h+='<tr><td><input aria-label="第'+(i+1)+'个商品名称" class="arr-name" data-arr-id="'+i+'" data-field="name" value="'+html(row.name)+'"></td>'+
+    '<td><input aria-label="到货日期" class="arr-date" data-arr-id="'+i+'" data-field="date" value="'+html(row.date)+'"></td>'+
+    '<td><input aria-label="标签张数" type="number" min="1" max="1500" step="1" class="arr-count" data-arr-id="'+i+'" data-field="count" value="'+row.count+'"></td>'+
+    '<td><select class="arr-unit" data-arr-id="'+i+'" data-field="unit">';
+  for(const [code,label] of Object.entries(arrivalUnitOptions))h+='<option value="'+code+'"'+(row.unit===code?' selected':'')+'>'+label+'</option>';
+  h+='</select></td></tr>';
+ }
+ h+='</tbody></table>';
+ list.innerHTML=h;
+}
+function renderArrivalPages(into){
+ into.replaceChildren();
+ if(arrivalIssue)return;
+ const items=arrivalStickerRows(),start=Number(el('arrivalFirstSlot').value)-1;
+ if(!items.length)return;
+ const pages=Math.ceil((items.length+start)/30),vertical=el('arrivalLayout').value==='column';
+ for(let pageIndex=0;pageIndex<pages;pageIndex++){
+  const page=document.createElement('div');page.className='page';
+  for(let pos=0;pos<30;pos++){
+   const position=vertical?(pos%3)*10+Math.floor(pos/3):pos,rec=items[pageIndex*30+position-start];
+   const node=document.createElement('div');
+   if(!rec){node.className='slotEmpty';page.append(node);continue}
+   node.className='sticker arrival-sticker';
+   node.style.setProperty('--accent',rec.color);
+   node.innerHTML='<div class="arr-top"><span>JFT FOOD DISTRIBUTION</span><span>INBOUND · 1 '+arrivalUnitNames[rec.unit]+'</span></div>'+
+    '<div class="arr-name">'+html(rec.name)+'</div>'+
+    '<div class="arr-bottom"><div class="arr-date-block"><span class="arr-date-label">到货</span><strong class="arr-date-value">'+html(rec.date)+'</strong></div><span class="arr-sequence">'+html(rec.sequence)+'</span></div>';
+   page.append(node);
+  }
+  into.append(page);
+ }
+}
+function refreshArrival(){
+ const total=arrivalLabelCount(),start=Number(el('arrivalFirstSlot').value)-1;
+ const hasError=!!arrivalIssue||total>3000||!arrivalRows.length;
+ el('arrivalStatus').textContent=arrivalRows.length+' 种商品 · '+total+' 张标签 · '+(total?Math.ceil((total+start)/30):0)+' 页 Letter 纸';
+ el('arrivalError').textContent=arrivalIssue||(total>3000?'一次最多打印3000张，请减少数量':'');
+ el('arrivalPrint').disabled=hasError;
+ el('arrivalPrint').style.opacity=hasError?'.4':'1';
+ el('arrivalPreviewInfo').textContent=total+' 张标签 · '+(el('arrivalLayout').value==='column'?'竖排':'横排')+' · 第'+el('arrivalFirstSlot').value+'格开始';
+ renderArrivalPages(el('arrivalPreviewPages'));
+}
+function generateArrival(){
+ arrivalRows.splice(0);arrivalIssue='';
+ const lines=el('arrivalPaste').value.replace(/\r/g,'').split('\n'),errors=[];
+ for(let i=0;i<lines.length;i++){
+  if(!lines[i].trim())continue;
+  try{const result=parseIncomingLine(lines[i],i+1);if(result)arrivalRows.push(result)}
+  catch(e){errors.push(e.message)}
+ }
+ if(!arrivalRows.length&&!errors.length)errors.push('请先输入商品名称、到货日期和数量');
+ if(errors.length)arrivalIssue=errors.join('\n');
+ el('arrivalResult').hidden=!arrivalRows.length;
+ el('arrivalPreviewPanel').hidden=!arrivalRows.length;
+ arrivalTable();refreshArrival();
+}
+el('arrivalGenerate').addEventListener('click',generateArrival);
+el('arrivalClear').addEventListener('click',()=>{
+ el('arrivalPaste').value='';arrivalRows.splice(0);arrivalIssue='';
+ el('arrivalResult').hidden=true;el('arrivalPreviewPanel').hidden=true;
+ el('arrivalStatus').textContent='';el('arrivalError').textContent='';
+ el('arrivalItems').replaceChildren();el('arrivalPreviewPages').replaceChildren();el('printer').replaceChildren();
+});
+el('arrivalItems').addEventListener('change',event=>{
+ const target=event.target,index=Number(target.dataset.arrId),field=target.dataset.field;
+ const row=arrivalRows[index];if(!row||!field)return;
+ const text=String(target.value||'').trim();
+ let message='';
+ if(field==='name'){
+  if(!text)message='商品名称不能为空';else row.name=text;
+ }else if(field==='date'){
+  const date=canonicalArrivalDate(text);
+  if(!date)message='请输入正确的日期，如 11.19 或 2026-11-19';
+  else {row.date=date;target.value=date}
+ }else if(field==='count'){
+  const qty=Number(text);
+  if(!Number.isSafeInteger(qty)||qty<1||qty>1500)message='每个商品数量必须在1–1500之间';
+  else row.count=qty;
+ }else if(field==='unit'){
+  if(!arrivalUnitNames[text])message='数量单位不支持';
+  else row.unit=text;
+ }
+ arrivalIssue=message?('第'+(index+1)+'行：'+message):'';
+ refreshArrival();
+});
+el('arrivalLayout').addEventListener('change',()=>{arrivalSlotTitles();refreshArrival()});
+el('arrivalFirstSlot').addEventListener('change',refreshArrival);
+el('arrivalPrint').addEventListener('click',()=>{
+ if(arrivalIssue||!arrivalRows.length||arrivalLabelCount()>3000)return;
+ renderArrivalPages(el('printer'));
+ document.title='JFT-Incoming-Labels';
+ window.print();
+});
+document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('click',()=>{
+ const toArrival=btn.dataset.mode==='arrival';
+ el('arrivalMode').hidden=!toArrival;
+ el('orderMode').hidden=toArrival;
+ document.querySelectorAll('[data-mode]').forEach(b=>{
+  const selected=b===btn;
+  b.classList.toggle('active',selected);
+  b.setAttribute('aria-pressed',selected?'true':'false');
+ });
+}));
+
 window.addEventListener('afterprint',()=>{el('printer').replaceChildren();document.title='JFT Label Printer'});
 })();
 </script></body></html>
