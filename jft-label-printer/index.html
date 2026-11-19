@@ -110,7 +110,8 @@ input[type="checkbox"]{width:17px;height:17px}
 <div class="stat fresh"><h3>鲜货 · Fresh</h3><span class="num" id="countFresh">0 张</span><span class="note" id="pagesFresh"></span><button class="primary" data-print="fresh">打印鲜货</button></div>
 </div>
 <div class="row" style="margin-top:12px">
-<div class="field" style="max-width:230px"><label for="firstSlot">第一张从第几格开始</label>
+<div class="field" style="max-width:260px"><label for="layoutOrder">标签排列顺序</label><select id="layoutOrder"><option value="column" selected>竖排 · 从上到下，再向右</option><option value="row">横排 · 从左到右，再向下</option></select></div>
+<div class="field" style="max-width:260px"><label for="firstSlot">第一张从第几格开始（依所选排列）</label>
 <select id="firstSlot"></select></div>
 <div class="field" style="max-width:200px"><label for="previewCategory">预览分类</label>
 <select id="previewCategory"><option value="all">全部（订单顺序）</option><option value="dry">干货</option><option value="frozen">冻货</option><option value="fresh">鲜货</option></select></div>
@@ -138,6 +139,8 @@ let groupCounter=0,parsingStatus='';
 const valid=x=>{let s=String(x==null?'':x).trim();return s.toLowerCase()==='null'?'':s};
 const date=new Date();el('date').value=date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
 const slot=el('firstSlot');for(let i=1;i<=30;i++){const o=document.createElement('option');o.value=i;o.textContent='第 '+i+' 格';slot.append(o)}
+function updateSlotDescriptions(){const vertical=el('layoutOrder').value==='column';for(let i=0;i<30;i++){const col=vertical?Math.floor(i/10):i%3;const row=vertical?i%10:Math.floor(i/3);slot.children[i].textContent='第 '+(i+1)+' 格 · 第'+(col+1)+'列第'+(row+1)+'行'}}
+updateSlotDescriptions();
 function html(s){return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function classify(n){
  let x=n.toLowerCase().replace(/\s+/g,' ');
@@ -348,7 +351,8 @@ function createPages(category,into){
  for(let pageNo=0;pageNo<total;pageNo++){
   const pg=document.createElement('div');pg.className='page';
   for(let pos=0;pos<30;pos++){
-   const rec=items[pageNo*30+pos-start];
+   const position=el('layoutOrder').value==='column' ? (pos%3)*10+Math.floor(pos/3) : pos;
+   const rec=items[pageNo*30+position-start];
    const node=document.createElement('div');
    if(!rec){node.className='slotEmpty';pg.append(node);continue}
    node.className='sticker';
@@ -365,7 +369,7 @@ function createPages(category,into){
 }
 function preview(){
  const c=el('previewCategory').value,list=allLabels(c);
- el('previewInfo').textContent=names[c]+' · '+list.length+' 张 · 同路线、同商家连续排版 · 第 '+el('firstSlot').value+' 格开始';
+ el('previewInfo').textContent=names[c]+' · '+list.length+' 张 · 同路线、同商家连续排版 · '+(el('layoutOrder').value==='column'?'竖排（先上到下，再向右）':'横排（先左到右，再向下）')+' · 第 '+el('firstSlot').value+' 格开始';
  createPages(c,el('previewPages'));
 }
 function doPrint(c){
@@ -385,6 +389,7 @@ el('records').addEventListener('change',e=>{
 });
 el('showMissing').addEventListener('change',()=>{records.forEach(r=>{if(r.missing)r.include=el('showMissing').checked});renderRecords();refresh()});
 el('firstSlot').addEventListener('change',refresh);
+el('layoutOrder').addEventListener('change',()=>{updateSlotDescriptions();refresh()});
 el('previewCategory').addEventListener('change',preview);
 document.querySelectorAll('[data-print]').forEach(btn=>btn.addEventListener('click',()=>doPrint(btn.dataset.print)));
 window.addEventListener('afterprint',()=>{el('printer').replaceChildren();document.title='JFT Label Printer'});
