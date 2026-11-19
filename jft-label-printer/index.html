@@ -38,11 +38,14 @@ input[type="checkbox"]{width:17px;height:17px}
 #previewWrap{overflow:auto;background:#e5e9ef;padding:16px;border-radius:10px}
 .previewNotice{font-size:12px;color:#5b6877;margin-bottom:8px}
 .page{background:white;width:8.5in;height:11in;box-shadow:0 2px 16px #0002;margin:0 auto 18px;padding:.5in .1875in;display:grid;grid-template-columns:repeat(3,2.625in);grid-template-rows:repeat(10,1in);column-gap:.125in;row-gap:0;box-sizing:border-box}
-.sticker{width:2.625in;height:1in;min-width:0;min-height:0;overflow:hidden;position:relative;border-left:.105in solid var(--accent);background:var(--pale);color:#111;box-sizing:border-box;padding:.035in .055in .035in .065in;display:flex;flex-direction:column;justify-content:space-between}
+.sticker{width:2.625in;height:1in;min-width:0;min-height:0;overflow:hidden;position:relative;border-left:.105in solid var(--accent);background:#fff;color:#111;box-sizing:border-box;padding:.035in .055in .035in .065in;display:flex;flex-direction:column;justify-content:space-between}
 .sticker .top{display:flex;align-items:center;justify-content:space-between;font-size:5.8pt;line-height:1.1;color:#425067;gap:3px;white-space:nowrap}
 .sticker .top .rt{font-weight:bold;max-width:65%;text-align:right;overflow:hidden;text-overflow:ellipsis}
-.sticker .merchant{font-size:11.3pt;line-height:1.05;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--deep)}
-.sticker .item{font-size:8.2pt;line-height:1.09;font-weight:700;min-height:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+.sticker .merchant{font-size:11.3pt;line-height:1.05;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#111}
+.sticker .item{font-size:8.2pt;line-height:1.09;font-weight:700;min-height:0;display:flex;gap:4px;align-items:flex-start;overflow:hidden}
+.sticker .item-text{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;min-width:0;overflow:hidden;overflow-wrap:anywhere}
+.sticker .type-dot{display:inline-block;flex:none;width:.105in;height:.105in;border-radius:50%;background:var(--category-dot);border:1px solid var(--category-dot);margin-top:1px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.category-dot{display:inline-block;vertical-align:middle;width:10px;height:10px;flex:none;border-radius:50%;margin-right:5px;background:var(--dot);border:1px solid var(--dot);-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .sticker .shortage{display:inline-block;background:#b3202b;color:#fff;font-size:7pt;padding:1px 5px;border-radius:2px;font-weight:900;margin-right:3px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .sticker .bottom{display:flex;justify-content:space-between;align-items:end;gap:5px;min-height:.2in}
 .sticker .piece{font-size:15pt;line-height:1;font-weight:900}
@@ -70,7 +73,7 @@ input[type="checkbox"]{width:17px;height:17px}
 </style>
 </head>
 <body>
-<header><h1>JFT Food Distribution · Label Printer</h1><p>按路线连续排列 · 不同商家不同颜色 · 干 / 冻 / 鲜分开打印</p></header>
+<header><h1>JFT Food Distribution · Label Printer</h1><p>白底彩色竖条区分商家 · 绿鲜 / 蓝冻 / 黄干 · 可分类或按顺序全部打印</p></header>
 <main>
 <section class="panel">
 <h2>① 粘贴联合出单表</h2>
@@ -127,13 +130,8 @@ input[type="checkbox"]{width:17px;height:17px}
 'use strict';
 const el=id=>document.getElementById(id);
 const $=s=>document.querySelector(s);
-const colors=[
- ['#b45150','#f9eceb','#873331'],['#3977af','#eaf3fc','#215886'],
- ['#4f9263','#eef8ef','#326b44'],['#9269b2','#f4eef9','#71438e'],
- ['#c1853f','#fff5e8','#966226'],['#268e91','#e9f9f7','#176668'],
- ['#b16786','#fbf0f5','#873d5d'],['#727fae','#eff2fc','#505d92'],
- ['#917c49','#faf6e9','#6a582d'],['#729343','#f4faeb','#537020'],
- ['#bd6c55','#fff0e9','#954730'],['#64869c','#eef5f8','#47677e']];
+const colors=["#E34256","#843ECC","#D57414","#008C85","#C2388D","#6355D6","#B84C35","#318A39","#BD3561","#4861BD","#A65A19","#6E3EA2","#D34892","#178EAB","#BB4230","#6A8620","#9B4C8B","#147C65","#CC5A5B","#5E53A3","#B3712D","#3977AD","#9A3853","#6C9A2B","#BA4881","#5669AC","#C16440","#338578","#9D59C0","#CA664F"].map(c=>[c,'#ffffff','#182437']);
+const categoryDots={dry:'#E0A329',frozen:'#2F7FD3',fresh:'#22A06B'};
 const names={all:'全部',dry:'干货',frozen:'冻货',fresh:'鲜货'};
 const records=[];
 let groupCounter=0,parsingStatus='';
@@ -243,7 +241,7 @@ function process(){
    groups=[withSequence?{start:0,end:width,merchantCol:1,itemCol:2,specCol:3,qtyCol:4,seqCol:0,route:el('route').value}:{start:0,end:width,merchantCol:0,itemCol:1,specCol:2,qtyCol:3,seqCol:-1,route:el('route').value}];
   }else{el('status').textContent='无法识别列：请至少复制商家、商品、规格、数量这4列。';return}
  }
- const routeOrder=new Map(),merchantOrder=new Map();
+ const routeOrder=new Map(),merchantOrder=new Map(),customerColors=new Map();
  let missing=0,noQty=0;
  for(const g of groups){
   const routeRow=rows.find(r=>r.slice(g.start,g.end).some(c=>/^Route\s*\d/i.test(c)));
@@ -267,8 +265,10 @@ function process(){
    if(!routeOrder.has(route))routeOrder.set(route,routeOrder.size);
    const mk=route+'\u241f'+customer;
    if(!merchantOrder.has(mk))merchantOrder.set(mk,merchantOrder.size);
+   const customerColorKey=customer.toLocaleLowerCase().replace(/\s+/g,' ').trim();
+   if(!customerColors.has(customerColorKey))customerColors.set(customerColorKey,customerColors.size);
    records.push({id:records.length,route,customer,name:item,spec,qty,category:classify(item),count:p.count,unit:p.unit,oneQty:p.quantity,weights:p.weights,weightMismatch:p.mismatch,weightMismatchText:p.mismatchText,fixedWeight:p.fixedWeight,casePacks:p.casePacks,loosePack:p.loosePack,
-    missing:noStock,include:!noStock||el('showMissing').checked,routeRank:routeOrder.get(route),merchantRank:merchantOrder.get(mk),color:colors[merchantOrder.get(mk)%colors.length]});
+    missing:noStock,include:!noStock||el('showMissing').checked,routeRank:routeOrder.get(route),merchantRank:merchantOrder.get(mk),color:colors[customerColors.get(customerColorKey)%colors.length]});
   }
  }
  if(!records.length){el('status').textContent='没有识别到订单。请复制包含“序号 / 商家名称 / 产品名称 / 数量”的完整路线区域。';el('result').hidden=true;el('previewPanel').hidden=true;return}
@@ -301,7 +301,7 @@ function allLabels(category){
   for(let n=0;n<r.count;n++){
    const index=(next.get(key)||0)+1;next.set(key,index);
    if(category!=='all'&&r.category!==category)continue;
-   stickerRows.push({route:r.route,customer:r.customer,name:r.name,qty:r.weights[n]||(!r.missing&&r.fixedWeight?r.fixedWeight:r.oneQty),weight:!!r.weights[n]||(!r.missing&&!!r.fixedWeight),spec:r.spec,sequence:index+'/'+totals.get(key),color:r.color,missing:r.missing});
+   stickerRows.push({route:r.route,customer:r.customer,name:r.name,qty:r.weights[n]||(!r.missing&&r.fixedWeight?r.fixedWeight:r.oneQty),weight:!!r.weights[n]||(!r.missing&&!!r.fixedWeight),spec:r.spec,sequence:index+'/'+totals.get(key),color:r.color,category:r.category,missing:r.missing});
   }
  }
  return stickerRows;
@@ -315,7 +315,7 @@ function renderRecords(){
   const r=items[0],section=document.createElement('div');section.className='group';section.style.setProperty('--accent',r.color[0]);section.style.setProperty('--pale',r.color[1]);
   let body='<div class="grouphead">'+html(r.route)+'　|　'+html(r.customer)+'（'+items.length+' 项）</div><table><thead><tr><th>印</th><th>商品</th><th>仓库</th><th>数量</th><th>标签</th></tr></thead><tbody>';
   for(const rec of items){
-   body+='<tr><td><input type="checkbox" data-id="'+rec.id+'" data-action="include" '+(rec.include?'checked':'')+'></td><td><div class="name">'+html(rec.name)+(rec.missing?' <strong style="color:#b3262e">【缺货】</strong>':'')+'</div><div class="desc">'+html(rec.spec)+'</div>'+(rec.fixedWeight?'<div class="desc">定重 '+html(rec.fixedWeight)+'/箱</div>':'')+(rec.casePacks?'<div class="desc">内装 '+html(rec.casePacks)+'/箱</div>':'')+(rec.weightMismatch?'<div class="desc" style="font-weight:bold;color:#b3262e">⚠ '+html(rec.weightMismatchText)+'</div>':'')+'</td><td><select data-id="'+rec.id+'" data-action="category">';
+   body+='<tr><td><input type="checkbox" data-id="'+rec.id+'" data-action="include" '+(rec.include?'checked':'')+'></td><td><div class="name">'+html(rec.name)+(rec.missing?' <strong style="color:#b3262e">【缺货】</strong>':'')+'</div><div class="desc">'+html(rec.spec)+'</div>'+(rec.fixedWeight?'<div class="desc">定重 '+html(rec.fixedWeight)+'/箱</div>':'')+(rec.casePacks?'<div class="desc">内装 '+html(rec.casePacks)+'/箱</div>':'')+(rec.weightMismatch?'<div class="desc" style="font-weight:bold;color:#b3262e">⚠ '+html(rec.weightMismatchText)+'</div>':'')+'</td><td><span class="category-dot" style="--dot:'+categoryDots[rec.category]+'"></span><select data-id="'+rec.id+'" data-action="category">';
    for(const c of ['dry','frozen','fresh'])body+='<option value="'+c+'" '+(rec.category===c?'selected':'')+'>'+names[c]+'</option>';
    body+='</select></td><td>'+html(rec.qty||'（空）')+'</td><td>'+rec.count+(rec.weights.length?' / '+rec.weights.length+'个重量':'')+'</td></tr>';
   }
@@ -356,7 +356,7 @@ function createPages(category,into){
    const shortRoute=rec.route.replace(/\s*[+]\s*/g,'+').replace(/Route\s*/i,'R');
    node.innerHTML='<div class="top"><span>JFT · '+html(date)+'</span><span class="rt">'+html(shortRoute)+'</span></div>'+
     '<div class="merchant">'+html(rec.customer)+'</div>'+
-    '<div class="item">'+(rec.missing?'<span class="shortage">缺货</span>':'')+html(rec.name)+'</div>'+
+    '<div class="item"><span class="type-dot" style="--category-dot:'+categoryDots[rec.category]+'"></span><span class="item-text">'+(rec.missing?'<span class="shortage">缺货</span>':'')+html(rec.name)+'</span></div>'+
     '<div class="bottom"><span class="piece">'+html(rec.sequence)+'</span><span class="qty'+(rec.weight?' weight':'')+'">'+html(rec.qty)+'</span></div>';
    pg.append(node);
   }
@@ -379,7 +379,7 @@ el('parse').onclick=process;
 el('reset').onclick=()=>{el('paste').value='';records.splice(0);el('result').hidden=true;el('previewPanel').hidden=true;el('status').textContent='';el('status').style.color='';el('previewPages').replaceChildren();el('printer').replaceChildren()};
 el('records').addEventListener('change',e=>{
  const id=Number(e.target.dataset.id),action=e.target.dataset.action,r=records[id];if(!r)return;
- if(action==='category')r.category=e.target.value;
+ if(action==='category'){r.category=e.target.value;const dot=e.target.closest('td')?.querySelector('.category-dot');if(dot)dot.style.setProperty('--dot',categoryDots[r.category]);}
  if(action==='include')r.include=e.target.checked;
  refresh();
 });
