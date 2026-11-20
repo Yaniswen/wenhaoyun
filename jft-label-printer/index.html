@@ -596,7 +596,7 @@ function renderArrivalPages(into){
    node.style.setProperty('--accent',rec.color);
    node.innerHTML='<div class="arr-top"><span>JFT FOOD DISTRIBUTION</span><span>INBOUND · 1 '+arrivalUnitNames[rec.unit]+'</span></div>'+
     '<div class="arr-name">'+html(rec.name)+'</div>'+
-    '<div class="arr-bottom"><div class="arr-date-block"><span class="arr-date-label">Date</span><strong class="arr-date-value">'+html(rec.date)+'</strong></div><span class="arr-sequence">'+html(rec.sequence)+'</span></div>';
+    '<div class="arr-bottom"><div class="arr-date-block"><span class="arr-date-label">Date</span><strong class="arr-date-value">'+html(rec.date)+'</strong></div></div>';
    page.append(node);
   }
   into.append(page);
