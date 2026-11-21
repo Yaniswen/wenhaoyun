@@ -224,6 +224,9 @@ function classifyItem(item,spec){
  if(!x)return result('dry','待核对',true);
  const saved=categoryMemory[x];
  if(['fresh','frozen','dry'].includes(saved))return result(saved,'手动记忆');
+ // 已收录的完整商品名称优先于泛用关键词（例如鲜库的 Bamboo Slice 与干库的 Bamboo Shoots）。
+ const exactStock=stockSkuTypes.get(x);
+ if(exactStock)return result(exactStock,'库存标准品');
  // 先排除干制、调味以及包装品，避免把草菇老抽、辣椒酱、春卷纸袋当鲜冻货。
  if(/干蒜|干姜|干辣椒|干蘑菇|香菇粉|虾酱|虾膏|鱼酱|姜蓉酱|咸三蒸酒|厨用酒|猪扒酱|芒果酱|糯米|签语饼|千语饼|罐装笋片|鸡精粉|鱼精粉|红薯粉条|寿司姜|寿司白姜|寿司红姜|红姜片|辣椒酱|辣椒膏|辣椒粉|辣椒油|老干妈|豆瓣酱|豆豉|花椒油|芝麻油|菜籽油|蚝油|鱼露|酱油|老抽|生抽|海鲜酱|草菇老抽|寿司醋|米醋|白醋|椰奶|椰浆|调味酱|汤底|汤粉|面包糠|玉米淀粉|土豆淀粉|淀粉|玉米粉|面粉|天妇罗粉|米粉|河粉|粉丝|芥末粉|白糖|红糖|干紫菜|海苔|蒜粒|蒜粉|姜粉|胡椒粉|味精|香料|芝麻酱|花生酱|沙拉酱|蛋黄酱|咖喱酱|香油|油炸粉/.test(x)||
  /\b(?:soy sauce|dark soy|fish sauce|oyster sauce|hoisin sauce|mushroom (?:soy|sauce)|sushi (?:white )?ginger|pickled ginger|sriracha|mango pulp|cooking wine|cooking sake|ginger paste|shrimp paste|fish paste|bonito flakes|cashewnuts?|nuts?|candy|food colouring|food coloring|water chestnuts?|bamboo slices?|bamboo shoots?|ramune|soda|soft drink|dried|dehydrated|chili (?:paste|sauce|powder|oil|flakes)|chilli (?:paste|sauce|powder|oil|flakes)|pepper (?:paste|sauce|powder|flakes)|chicken (?:powder|seasoning|stock)|coconut (?:milk|cream|sauce)|corn starch|potato starch|starch|flour|sugar|salt|tempura flour|panko|breadcrumbs?|soup base|soup mix|stock powder|broth powder|seasoning|vinegar|sushi rice|jasmine rice|rice noodles?|rice sticks?|rice vermicelli|glass noodles?|sweet potato noodles?|mirin|wasabi powder|sesame oil|canola oil|vegetable oil|olive oil|cooking oil|sauce|spices?|black pepper|black peppercorn|mayonnaise|mayo|canned)\b/.test(x))return result('dry','调味/常温食品');
@@ -235,8 +238,7 @@ function classifyItem(item,spec){
  if(/\b(?:fresh|refrigerated|chilled)\b|新鲜|冷藏/.test(x)||/(?:0\s*(?:-|~|至)\s*10\s*°?\s*c)/i.test(detail))return result('fresh','鲜货/冷藏标识');
  // 寿司豆皮存在不同储存方式，未核实时不直接认定为鲜货。
  if(/\binari\b|寿司豆皮/.test(x))return result('dry','寿司豆皮需核对储存条件',true);
- const canonical=stockSkuTypes.get(x);
- if(canonical)return result(canonical,'库存标准品');
+
  // 冻货商品：寿司虾、饺子春卷、海产、冻肉、冷冻面食及甜点。
  if(/冰淇淋|雪糕|慕斯蛋糕|芝士蛋糕|蟹棒|蟹柳|蟹肉碎|海草沙拉|海藻沙拉|毛豆|虾仁|拉长虾|面包虾|鱼丸|鱼饼|鱼豆腐|炸带子|烧卖|饺子|蔬菜饺|流沙包|虾饺|天妇罗虾|凤尾|黑鱼片|龙利鱼|立鱼|龙虾尾|春卷皮|春卷|馄饨皮|廣東麵|年糕|炸鸡块|鸡肉块|鱼籽|吞拿|鳗鱼|鱿鱼|章鱼|花甲|花蛤|海鲜拼盘|素饺|炸豆腐泡/.test(x)||
  /\b(?:ice cream|mousse cake|cheesecake|cheese cake|nobashi|sushi ebi|jfc ebi|har gow|hargow|tilapia|basa fillets?|lobster tails?|snakehead fish|ebi 4l|tobiko|mongo ika|hlso|edamame|seaweed salad|crab sticks?|surimi|shredded crab|shrimp\d*|shimp|prawns?|tunna|aqualis|scallops?|squid|octopus|clams?|salmon|tuna|unagi|eel|sashimi|roe|masago|fish cake|fish balls?|fish fillet|butterfish|escolar|dumplings?|gyoza|spring roll|egg ?roll wrap|wonton wrap|won ?ton wrap|rice cakes?|narutomaki|karaage|yakitori)\b/.test(x))return result('frozen','冷冻食品');
