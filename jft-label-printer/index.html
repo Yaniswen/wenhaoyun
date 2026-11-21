@@ -100,6 +100,10 @@ input[type="checkbox"]{width:17px;height:17px}
  <button type="button" class="mode-tab active" data-mode="order" aria-pressed="true">① 订单配送 Label</button>
  <button type="button" class="mode-tab" data-mode="arrival" aria-pressed="false">② 到货商品 Label</button>
 </div>
+<div class="help" style="margin:0 0 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+ <span id="sharedCategoryStatus" role="status">商品分类库：正在读取中央数据库；离线仍可使用内置商品库。</span>
+ <button type="button" id="refreshSharedCategories" class="secondary" style="padding:5px 10px;font-size:12px">刷新分类库</button>
+</div>
 <div id="orderMode">
 <section class="panel">
 <h2>① 粘贴联合出单表</h2>
@@ -206,24 +210,38 @@ function skuKey(x){return String(x==null?'':x).toLowerCase().trim().replace(/^(?
 const stockSkuLists={"fresh":["Olymel Pork Butt 新鲜精修梅头肉","Rivas Avocado","Lucky 7 Avocado新区","Coliman Avocado 新区","St Carlos Avocado (圣卡罗牛油果) Avocado","Coliman Avocado","Coliaman Avocado (圣卡罗牛油果)","St Carlos Avocado (圣卡罗牛油果) 新区","Avocado New Crop","Green Pepper 25LB Open box","Green Pepper NO2","Green Pepper XL/XXL","Green Pepper choice","Red Sheppard","Red Habanero","Jalapeno","Red Pepper","Red Pepper NO2","Red Pepper 5KG","Thai Chili Red","Thai Chili Green","English Cucumber","English Cucumber 24CT","Tomato Hothouse","Tomato 5/6 Beefsteak","Salad Tomato","Roma Tomato Jumbo NO1","Roma Tomato","Grape Tomato","Grape Tomato Costco","Vine Tomato","Spanish Onion Super Colossal","Spanish Onion Colossal","Spanish Onion Jumbo/No.2 Spanish Onion","Red Onion Jumbo","Red Onion Jumbo MEX","Green Onion","Broccoli Crown 无茎西兰花 好靓","Broccoli Crown Wahteng 无茎西兰花","Broccolini","White Mushroom (call for special)","King Mushroom （韩国皇子菇）","King Mushroom (小香杏)","Enoki Mushroom (金针菇)","Chinese Radish白萝卜","Jumbo Carrot","Jumbo Carrot QC","Green Cabbage 袋装","Green Cabbage 箱装","Red Cabbage","Green Cabbage","Nappa 绍菜","Flat Cabbage 高丽菜","Romaine heart 罗马心","Green Leaf 唐生菜","Iceberg 圆生菜","Yam Hogwild","Jumbo Yam","Russet Potato","Yellow Potato","Green Bean","Green Long Bean","Snow Pea","Baby Shanghai 上海苗","Shanghai Bokchoy 上海白","Baby Bok Choy Sum 鸡毛菜","茼蒿","Bamboo Slice 笋片","A Choy Stem莴笋","Garlic stem 蒜苔","Yu CHOY 油菜","Kangkong 青通","Sweet potato leaves 番薯叶","Chinese broccoli 芥兰 Wah Teng","A Choy A菜 油麦菜","Chinese Chive 韭菜","Big Gai Choy 大芥菜","Taro 大芋头","Chinese Ginger","Peeled Garlic","Chinese Cauliflower 富贵花","PURPLE CHOY SUM 红凤菜 (Case箱装)","Thai Basil","Culantro","Mint","Cilantro","Cilantro Wahteng 华腾","Chinese Eggplant Wahteng 茄子","Chinese Eggplant 茄子","Big Eggplant 大茄子","Bean Sprout 豆芽","Squash","Kabocha pumpkin","Green Zucchini ON","Green Zucchini NO.2","kale","Curly Parsley（小草）","Lemon","Lime No.1","Asparagus","Celery 西芹","Cauliflower Jumbo 9/12 椰菜花","Tofu 永隆板豆腐","Soft Tofu 日升","Medium FirmTofu 日升","Firm Tofu 日升","Egg XL","Altaulfo Mango 吕宋芒","Mango Kent","Mango Kent soft","Red Delicious","Asian Pear","Navel Orange","Cantaloupe","Honeydew","strawberry","Baby Spinach","Spring Mix","Crimini","Pineapple","Tomatillo","冬瓜","Red Beats","甜菜","石榴","彩椒","蒜头3pcs","日本小番薯"],"frozen":["Bone-In Chicken Feet  鸡脚/鸡爪","Chicken Soft Bone  catch weight /kg 鸡脆骨","Bone-In Skin-On Leg Quarters18kg/cs 鸡腿连背","Whole Bone-In 鸡全翅 catch weight/kg","Chicken Wing Split Tip 18.14kg/cs  分段鸡翅 M Maple Leaf","Chicken Wing Split Tip 18.14kg/cs  分段鸡翅 M 透明袋","Chicken Wing Split Tip 18.14kg/cs  分段鸡翅 6-8蓝色袋 （USA）","Bone-In Chicken Mid Wing  鸡中翅  catch weigh/kg","Boneless Chicken Breast - Boneless  4kg/cs 本地小箱鸡胸肉","Boneless Canada Chicken Breast 25kg/cs 5*5 鸡胸肉加拿大","Boneless Chile Ariztia18.16kg/ cs 鸡胸肉智利","Boneless Chicken Breast USA  18.14kg/cs 鸡胸肉美国","Boneless Canada Chicken Breast Diced 称重/cs 鸡胸肉切块加拿大","Boneless Canada Chicken Breast 称重/cs 鸡胸肉加拿大","Boneless Chicken Tender  25kg/cs 鸡柳","Boneless Skinless Chicken Leg Meat 25kg/cs 鸡腿去皮切粒 25KG","Boneless Skinless Chicken Leg Meat 25kg/cs 鸡腿去皮 25KG","Boneless Skinless Chicken Leg Meat 鸡腿去皮 M 中号 25KG","Bone-In Chicken Carcass 鸡架大箱","Bone-In Chicken Carcass 鸡架小箱","Boneless Canada Chicken Breast Cut 10kg/cs 鸡胸肉切块（小）","Boneless Canada Chicken Breas Ariztia 10KG","Boneless Canada Chicken Breast Agrosuper 10KG","Chicken Wing Split Tip 18.14kg/cs  分段鸡翅 M 透明袋ACE New","Chicken gizzard 鸡胗","Reuven Chicken Karaage 日式炸鸡块 2KG×2","Boneless Skin-ON Chicken 25kg/cs 鸡腿带皮 25KG","Boneless Skinless Chicken 25kg/cs 鸡腿去皮 25KG","Whole Chicken 整鸡","WIS Udon 乌冬面 5PCS×8","Ramen 拉面","Wing’s Egg Roll Wrap 蛋卷皮","Wing’s Cantonese Steamed Chow Mein 广东面 5LB","金康小春卷25g","金康大春卷50g","wis 大春卷50g","Teion Escolar Fillet Butterfish 奶油鱼 27LB","JFC Red Tuna Loin 大红吞拿块 15LB","JFC Red Tuna Loin 大红吞拿块 30LB","HLSO Shrimp 去头带壳虾 26/30","Chinese Peeled Shrimp 中国虾仁 16/20","Chinese Peeled Shrimp 中国虾仁 21/25","Chinese Peeled Shrimp 中国虾仁 26/30","Chinese Peeled Shrimp 中国虾仁 31/35","Chinese Peeled Shrimp 中国虾仁 61/70","Chinese Peeled Shrimp 中国虾仁 110/130","JFC Nobashi Shrimp 拉长虾 21/25 600Pcs","海之宝 Nobashi 拉长虾 21/25 600Pcs","Umani/ Umami Nobashi 拉长虾 26/30 900 Pcs","WIS Gold Crab Stick 金装蟹柳 500G×20","Yutaka Crab Stick 大丰蟹柳 500G×20","WIS Gold Premium Crab Stick 金装Premium蟹柳 500G×20","Yutaka Shredded Crab Stick 蟹肉碎 1KG×10","顶好 Fried Scallops 炸带子","IQF Mixed Vegetables 冷冻三色蔬菜（玉米粒／胡萝卜丁／青豆）1.5KG×6","IQF Corn Kernels 冷冻玉米粒 1.5KG×6","WIS Edamame 毛豆","T&O Edamame 毛豆荚","WIS Shelled Edamame 去壳毛豆仁","T&O Seaweed Salad 海草沙拉 10KG","T&O Boxed Seaweed Salad 盒装海草沙拉 2×4KG","Super Bear Seaweed Salad 盒装海草沙拉 2×4KG","WIS Pork Gyoza 猪肉饺子 590G×12","O’Tasty Pork Dumplings 全美猪肉饺子","O’Tasty Chicken Dumplings 全美鸡肉饺子","PH Vegetable Dumplings 素饺子","PUL Beef Inside Round 牛腿肉","Beef Chuck Sliced 牛肉片","Pork Neck Bone 猪脊骨"],"dry":["Heiwa Sushi Rice 平和寿司米 40LB","Sekka Sushi Rice 雪花寿司米 40LB","Mei Loi Mai 美女米 20KG","Golden Phoenix Jasmine Rice 金凤香米 36LB","Erawan Rice Noodles 三象河粉 3MM","Double Swallow Rice Noodles 双燕江门排粉 454G×30","Pearl River Bridge Kong Moon Rice Stick 珠江桥江门排粉","Canola Oil 菜籽油","Tempura Flour 天妇罗粉","ADM-202 面粉 44LB","White Sugar 白糖 20KG","MR GOUDAS White Sugar 白糖 20KG","Ingredion Corn Starch 绿袋玉米淀粉 50LB","Windmill Corn Starch 风车玉米淀粉 50LB","Windmill Potato Starch 风车土豆淀粉 50LB","Red Dragon Jasmine Rice 红龙米 40LB","Kikkoman Soy Sauce 万字酱油 18.9L","JP Sushi Vinegar JP寿司醋","Heiwa White Sushi Ginger 寿司白姜 20LB","wis panko","wis togo wasabi","大丰 wasabi powder","wis mirin","wis 鱼精粉","乌冬汤底","Kikkoman To Go Soy Sauce 外卖寿司酱油","Tep Tip Coconut Milk 大罐椰奶 2.9L×6","Pantai Chili Paste 潘泰辣椒膏 3KG×4","笋片 Bamboo Shoots","Allen’s White Vinegar 白醋 5L×2","Lee Kum Kee Mushroom Dark Soy Sauce 李锦记草菇老抽","Fortune Cookies 签语饼","Wings Plum Sauce Packets 外卖苏梅酱包","Wings Soy Sauce Packets 外卖豉油包","Pearl River Bridge Mushroom Dark Soy Sauce 珠江桥草菇老抽 8L×2","RP-28 单格餐盒（规格未注明）","KY-28 Dynasco 餐盒","RS-24 Dynasco 餐盒","R-24W 圆盒 24OZ 150SETS","RP-803 三格餐盒","RP073 三格餐盒","JN-128W 餐盒","G-20HD 加厚纸袋 20LB","Y-24W LR 餐盒","Paksavvy G-5LB 牛皮纸袋 5LB 500PCS","Paksavvy G-10LB 牛皮纸袋 10LB 500PCS","Paksavvy G-12LB 牛皮纸袋 12LB 500PCS","Paksavvy G-14LB 牛皮纸袋 14LB 500PCS","G-20 Brown Kraft Paper Bag 普通牛皮纸袋 20LB","DD50 Kraft Paper Bag 打包纸袋 50LB 500PCS","Rosenbloom DD65 Brown Paper Bag 打包纸袋 65LB 250PCS","Rosenbloom DD65 Brown Paper Bag 打包纸袋 65LB 400PCS","Atlas 2061008 Regular White Sandwich Bags 小号白色纸袋 1000PCS","Atlas 2061009 Jumbo White Sandwich Bags 大号白色纸袋 1000PCS"]};
 const stockSkuTypes=new Map();
 for(const c of ['fresh','frozen','dry'])for(const item of stockSkuLists[c])stockSkuTypes.set(skuKey(item),c);
+// Central read-only directory; the embedded SKU list is an offline fallback.
+const sharedCategoryTypes=new Map(),sharedCategoryUpdated=new Map();
+const sharedCategoryApi='https://oiytsycjzshksuoyjqxd.supabase.co/rest/v1/jft_label_sku_categories?select=sku_key,item_name,category,updated_at&order=sku_key.asc&limit=1000';
+const sharedCategoryPublicKey='sb_publishable_V3QLeH_4-Pkiy6KASeKJtA_ASTXe2gy';
 const categoryMemoryKey='jft-label-sku-types-v1';
 let categoryMemory={};
 try{const old=JSON.parse(localStorage.getItem(categoryMemoryKey)||'{}');if(old&&typeof old==='object'&&!Array.isArray(old))categoryMemory=old}catch(e){}
+const categoryMemoryTimeKey='jft-label-sku-types-edited-at-v1';
+let categoryMemoryTime={};
+try{const ts=JSON.parse(localStorage.getItem(categoryMemoryTimeKey)||'{}');if(ts&&typeof ts==='object'&&!Array.isArray(ts))categoryMemoryTime=ts}catch(e){}
 function rememberCategory(item,category){
  if(!['fresh','frozen','dry'].includes(category))return;
- categoryMemory[skuKey(item)]=category;
- try{localStorage.setItem(categoryMemoryKey,JSON.stringify(categoryMemory))}catch(e){}
+ const key=skuKey(item);
+ categoryMemory[key]=category;
+ categoryMemoryTime[key]=new Date().toISOString();
+ try{localStorage.setItem(categoryMemoryKey,JSON.stringify(categoryMemory));localStorage.setItem(categoryMemoryTimeKey,JSON.stringify(categoryMemoryTime))}catch(e){}
 }
 function clearRememberedCategories(){
- categoryMemory={};
- try{localStorage.removeItem(categoryMemoryKey)}catch(e){}
+ categoryMemory={};categoryMemoryTime={};
+ try{localStorage.removeItem(categoryMemoryKey);localStorage.removeItem(categoryMemoryTimeKey)}catch(e){}
 }
 function classifyItem(item,spec){
  const x=skuKey(item), detail=skuKey(spec);
  const result=(category,source,review=false)=>({category,source,review});
  if(!x)return result('dry','待核对',true);
- const saved=categoryMemory[x];
+ const saved=categoryMemory[x],central=sharedCategoryTypes.get(x);
+ const localTime=Date.parse(categoryMemoryTime[x]||'')||0;
+ const centralTime=Date.parse(sharedCategoryUpdated.get(x)||'')||0;
+ // A later central correction supersedes earlier browser-local edits.
+ if(central&&(!['fresh','frozen','dry'].includes(saved)||centralTime>=localTime))return result(central,'中央商品库');
  if(['fresh','frozen','dry'].includes(saved))return result(saved,'手动记忆');
+ if(central)return result(central,'中央商品库');
  // 已收录的完整商品名称优先于泛用关键词（例如鲜库的 Bamboo Slice 与干库的 Bamboo Shoots）。
  const exactStock=stockSkuTypes.get(x);
  if(exactStock)return result(exactStock,'库存标准品');
@@ -679,6 +697,43 @@ document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('clic
  });
 }));
 
+async function syncSharedCategories(){
+ const status=el('sharedCategoryStatus');
+ const button=el('refreshSharedCategories');
+ button.disabled=true;
+ status.textContent='商品分类库：正在同步中央数据库…';
+ try{
+  const response=await fetch(sharedCategoryApi,{
+   method:'GET',cache:'no-store',headers:{'apikey':sharedCategoryPublicKey,'Accept':'application/json'}
+  });
+  if(!response.ok)throw new Error('HTTP '+response.status);
+  const data=await response.json();
+  if(!Array.isArray(data)||!data.length)throw new Error('分类库返回空数据');
+  const nextTypes=new Map(),nextDates=new Map();
+  for(const entry of data){
+   const key=skuKey(entry.sku_key||entry.item_name);
+   if(!key||!['fresh','frozen','dry'].includes(entry.category))continue;
+   nextTypes.set(key,entry.category);
+   nextDates.set(key,String(entry.updated_at||''));
+  }
+  if(!nextTypes.size)throw new Error('没有有效商品分类');
+  sharedCategoryTypes.clear();sharedCategoryUpdated.clear();
+  for(const [key,value]of nextTypes)sharedCategoryTypes.set(key,value);
+  for(const [key,value]of nextDates)sharedCategoryUpdated.set(key,value);
+  status.textContent='中央分类库已同步：'+sharedCategoryTypes.size+'个商品 · 干/冻/鲜跨设备共用';
+  if(records.length){
+   for(const record of records){
+    const updated=classifyItem(record.name,record.spec);
+    record.category=updated.category;record.categorySource=updated.source;record.categoryReview=updated.review;
+   }
+   renderRecords();refresh();
+  }
+ }catch(error){
+  status.textContent='中央分类库暂不可用，已使用内置商品库（可继续打印）。点击右侧重试。';
+ }finally{button.disabled=false}
+}
+el('refreshSharedCategories').addEventListener('click',syncSharedCategories);
+syncSharedCategories();
 window.addEventListener('afterprint',()=>{el('printer').replaceChildren();document.title='JFT Label Printer'});
 })();
 </script></body></html>
