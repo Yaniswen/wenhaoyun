@@ -26,7 +26,17 @@ select,input,textarea{border:1px solid #cfdae7;border-radius:9px;padding:10px 11
 .driver-grid{display:grid;grid-template-columns:minmax(280px,500px) minmax(310px,1fr);gap:14px}.driver-stop{padding:11px 12px;border:1px solid #dfebf4;border-radius:10px;margin:10px 0}.driver-stop.current{border:2px solid #3387c4;background:#f2faff}.item-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid #e8edf4}.item-desc{font-size:12px;color:#6e8091;margin-top:2px}
 .mode{display:flex;gap:5px;background:#edf2f8;border-radius:10px;padding:4px}.mode button{background:transparent;color:#5b6f80;font-size:13px;flex:1}.mode button.on{background:#fff;color:#155f9e;box-shadow:0 1px 4px #18345016}
 .code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.2px;font-size:12px}
-.scan-chooser button{min-height:50px;line-height:1.4}.scan-device-desc{font-size:12px;color:#597186;line-height:1.6;margin:10px 0}.scan-device-panel{padding:12px;border:1px solid #e0e9f2;border-radius:10px;margin-top:11px;background:#fbfdff}
+.scan-chooser button{min-height:50px;line-height:1.4}
+.login-wrap{min-height:calc(100vh - 80px);display:flex;align-items:center;justify-content:center;padding:25px 14px;background:#f1f5fa}
+.login-card{width:min(500px,100%);padding:25px;background:white;border:1px solid #dbe5f0;border-radius:17px;box-shadow:0 10px 40px #193d5c14}
+.login-card h1{font-size:24px;margin:0 0 6px}.login-card p{font-size:13px;color:#62758a;line-height:1.6}
+.role-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}
+.role-buttons button{background:#f0f4f9;border:2px solid transparent;min-height:85px;color:#35536c}
+.role-buttons button.on{border-color:#2076bc;background:#eaf4ff;color:#135b98}
+.role-buttons button small{display:block;font-size:11px;font-weight:500;margin-top:7px}
+.demo-login-info{margin-top:14px;font-size:12px;padding:11px;background:#f4f7fb;border-radius:8px;color:#546b83;line-height:1.65}
+#logoutBtn{background:transparent;color:#dce9f7;border:1px solid #6586a0;font-size:12px;padding:7px 11px}
+#sessionText{font-size:12px;color:#cadfed}@media(max-width:600px){.login-card{padding:18px}}.scan-device-desc{font-size:12px;color:#597186;line-height:1.6;margin:10px 0}.scan-device-panel{padding:12px;border:1px solid #e0e9f2;border-radius:10px;margin-top:11px;background:#fbfdff}
 #scanCode:focus{border-color:#176bb3;outline:2px solid #b8dfff;outline-offset:1px}
 #camView{background:#142536;min-height:160px;max-height:320px;object-fit:cover}
 .camera-status{font-size:12px;color:#496579;margin:8px 0}
@@ -41,9 +51,17 @@ select,input,textarea{border:1px solid #cfdae7;border-radius:9px;padding:10px 11
 @page{size:letter;margin:0}
 @media print{body *{visibility:hidden!important}#printArea,#printArea *{visibility:visible!important}#printArea{display:block!important;position:absolute;left:0;top:0;width:8.5in} .print-page{width:8.5in;height:11in;padding:.5in .1875in;display:grid;grid-template-columns:repeat(3,2.625in);grid-template-rows:repeat(10,1in);column-gap:.125in;page-break-after:always;break-after:page}.print-label{overflow:hidden;border-left:0.1in solid #269b78;padding:.03in .045in;font-family:Arial,sans-serif}.print-label .sticker{outline:none;border:0;padding:0;min-height:0;height:.92in}.print-label .name{font-size:10pt}.print-label .item{font-size:7pt}.print-label .piece{font-size:15pt}.print-label .qr{width:.65in;height:.65in}.print-label .qr canvas,.print-label .qr img{width:.65in!important;height:.65in!important}.print-page:last-child{page-break-after:auto;break-after:auto}}
 </style></head>
-<body><header><div class="brand">JFT Delivery OS <small>Food Distribution · 调度 / 司机 / 扫码 / 标签</small></div><span class="demo-pill">可操作 Demo · 本机模拟数据</span></header>
-<nav><button class="active" data-page="dispatch">◉ 仓库调度地图</button><button data-page="driver">▣ 司机端</button><button data-page="scan">▦ 扫码 / 标签</button><button data-page="import">↻ 联合出单表 / 加单</button></nav>
-<main>
+<body><header><div class="brand">JFT Delivery OS <small>Food Distribution · 调度 / 司机 / 扫码 / 标签</small></div><div class="controls"><span id="sessionText"></span><button id="logoutBtn" style="display:none">退出登录</button><span class="demo-pill">可操作 Demo · 本机模拟数据</span></div></header>
+<section id="loginScreen" class="login-wrap"><div class="login-card">
+<h1>JFT Delivery OS</h1><p>选择身份进入配送系统。管理人员使用仓库电脑，司机使用手机浏览器。</p>
+<div class="role-buttons"><button id="chooseAdmin" class="on">▣ 管理端<small>路线调度 · 加单 · 标签 · 装车</small></button><button id="chooseDriver">▰ 司机端<small>我的配送 · 导航 · 扫码下货</small></button></div>
+<div id="driverLoginFields" class="field" style="display:none"><label>司机账号</label><select id="loginDriver"></select></div>
+<div class="field"><label id="pinLabel">管理演示口令</label><input id="loginPin" type="password" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="请输入演示口令"></div>
+<button class="primary" id="loginBtn" style="width:100%">进入系统</button>
+<div class="demo-login-info">管理端 Demo 口令：<b>2468</b>；司机端：任选司机、Demo 口令 <b>1234</b>。<br>这些公开口令仅用于演示界面，并非真正安全的登录；生产版会采用服务端账号认证和数据库权限。</div>
+</div></section>
+<nav id="appNav" style="display:none"><button class="active" data-page="dispatch">◉ 仓库调度地图</button><button data-page="driver">▣ 司机端</button><button data-page="scan">▦ 扫码 / 标签</button><button data-page="import">↻ 联合出单表 / 加单</button></nav>
+<main id="appMain" style="display:none">
 <section id="dispatch" class="page active">
  <div class="topline"><div><h1>仓库交互调度地图</h1><div class="subtitle">可选择线路、调整客户顺序、模拟加单、发布路线；地图坐标均为演示位置。</div></div><div class="controls"><button class="btn" id="optBtn">智能排序（演示）</button><button class="primary" id="publishBtn">发布到司机端</button></div></div>
  <div class="stats"><div class="stat"><b id="stStops">0</b><span>总配送站点</span></div><div class="stat"><b id="stPieces">0</b><span>标签件数</span></div><div class="stat"><b id="stDone">0</b><span>已完成站点</span></div><div class="stat"><b id="stNew">0</b><span>待装车 / 新加单</span></div></div>
@@ -103,6 +121,33 @@ var s=[
 return {stops:s,events:[{time:new Date().toLocaleTimeString("zh-CN"),msg:"Demo 初始化：示例客户、订单和标签已生成"}],mode:"load",lastSync:null,driverLoc:null,publishedAt:null}
 }
 var STORAGE="jft_delivery_os_demo_v1";
+var SESSION_KEY="jft_delivery_demo_session_v1",loginChoice="admin",session=null;
+try{session=JSON.parse(sessionStorage.getItem(SESSION_KEY))}catch(e){}
+if(!session||!["admin","driver"].includes(session.role)||session.role==="driver"&&!ROUTES.some(function(r){return r.id===session.route}))session=null;
+function isAdmin(){return !!session&&session.role==="admin"}
+function isDriver(){return !!session&&session.role==="driver"}
+function canAccess(pg){return !!session&&(isAdmin()||pg==="driver"||pg==="scan")}
+function applySession(){
+$("loginScreen").style.display=session?"none":"flex";
+$("appNav").style.display=session?"flex":"none";
+$("appMain").style.display=session?"block":"none";
+$("logoutBtn").style.display=session?"inline-block":"none";
+$("sessionText").textContent=!session?"":isAdmin()?"管理端 · Demo":"司机 · "+route(session.route).driver;
+document.querySelectorAll("#appNav [data-page]").forEach(function(b){b.style.display=isDriver()&&!["driver","scan"].includes(b.dataset.page)?"none":""});
+var scanTab=document.querySelector('#appNav [data-page="scan"]');if(scanTab)scanTab.textContent=isDriver()?"▦ 扫码下货":"▦ 扫码 / 标签";
+$("driverRoute").disabled=isDriver();$("scanRoute").disabled=isDriver();
+$("printBtn").style.display=isDriver()?"none":"inline-block";$("labelRoute").disabled=isDriver();
+var labelCard=$("labelRoute").closest(".card");if(labelCard)labelCard.style.display=isDriver()?"none":"block";
+$("loadMode").style.display=isDriver()?"none":"inline-block";
+if(isDriver()){driverRoute=session.route;scanRoute=session.route;labelRoute=session.route;state.mode="deliver";$("driverRoute").value=driverRoute;$("scanRoute").value=scanRoute;$("labelRoute").value=labelRoute}
+if(session)goPage(isDriver()?"driver":"dispatch");else{stopCamera();$("loginPin").value="";setTimeout(function(){$("loginPin").focus()},100)}
+}
+function doLogin(){
+var pin=$("loginPin").value.trim(),dr=$("loginDriver").value;
+if(loginChoice==="admin"){if(pin!=="2468"){flash("管理演示口令错误");return}session={role:"admin"}}
+else{if(pin!=="1234"){flash("司机演示口令错误");return}if(!ROUTES.some(function(r){return r.id===dr})){flash("请选择司机");return}session={role:"driver",route:dr}}
+sessionStorage.setItem(SESSION_KEY,JSON.stringify(session));applySession();renderAll();flash(isAdmin()?"已进入管理端":"已进入司机端 · "+route(driverRoute).driver)
+}
 var state;try{state=JSON.parse(localStorage.getItem(STORAGE))}catch(e){}if(!state||!Array.isArray(state.stops))state=makeDefault();if(!["hardware","camera"].includes(state.scanDevice))state.scanDevice="hardware";
 var selected="S102",selectedDriver="S101",currentPage="dispatch",map,mapLayer,warehouseMarker,vehicleMarker,scanStream,scanTimer,scanHistory=[];
 var filter="all",scanRoute="DT",labelRoute="DT",driverRoute="DT",importRoute="DT";
@@ -147,6 +192,7 @@ var c=counts(s);$("selectedDetail").innerHTML='<h3>'+esc(s.customer)+' '+badge(s
 $("detailNav").onclick=function(){navTo(s)};$("detailDriver").onclick=function(){driverRoute=s.route;selectedDriver=s.id;$("driverRoute").value=driverRoute;goPage("driver")};
 }
 function renderMap(){
+if(!session)return;
 if(!window.L){$("map").innerHTML='<div class="notice" style="margin-top:100px">地图组件未载入。订单列表、导航及扫码仍可使用。</div>';return}
 if(!map){map=L.map("map",{scrollWheelZoom:true}).setView([44.674,-63.607],11);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap contributors",maxZoom:18}).addTo(map);mapLayer=L.layerGroup().addTo(map);warehouseMarker=L.marker([44.69724,-63.6615]).addTo(map).bindPopup("JFT 仓库 · 600 Bedford Hwy")}
 mapLayer.clearLayers();
@@ -187,9 +233,11 @@ $("scanHistory").innerHTML=scanHistory.slice(0,8).map(function(e){return '<div c
 }
 function drawQr(root){if(!window.QRCode)return;root.querySelectorAll(".qr[data-code]").forEach(function(el){try{new QRCode(el,{text:el.getAttribute("data-code"),width:80,height:80,correctLevel:QRCode.CorrectLevel.M})}catch(e){el.textContent=el.getAttribute("data-code")}})}
 function commitScan(value){
+if(!session){flash("请先登录");return}if(isDriver()){scanRoute=session.route;state.mode="deliver"}
 var id=String(value||"").trim().toUpperCase();if(!id){flash("请先输入或扫描标签编号");return}
 var s=state.stops.find(function(x){return x.pieces.some(function(p){return p.id.toUpperCase()===id})});
 if(!s){flash("未找到标签："+id);return}var p=s.pieces.find(function(x){return x.id.toUpperCase()===id});
+if(isDriver()&&s.route!==session.route){flash("这件货不属于你的配送路线！");return}
 if(s.route!==scanRoute){flash("警告：这件货属于 "+route(s.route).name+"，不是当前路线！");return}
 if(state.mode==="load"){if(p.state!=="pending"){flash("重复扫码：这件货已经装车或交付");return}p.state="loaded";note("扫码上车："+s.customer+" / "+p.name+" / "+p.id)}
 else {if(p.state==="delivered"){flash("重复扫码：这件货已经交付");return}if(p.state!=="loaded"){flash("未装车！请先确认货物已装车");return}p.state="delivered";note("扫码下货："+s.customer+" / "+p.name+" / "+p.id)}
@@ -231,16 +279,21 @@ fixed.forEach(function(s,i){s.order=i+1});while(remaining.length){remaining.sort
 }
 function renderEvents(){$("eventLog").innerHTML=state.events.map(function(e){return '<div class="log">'+esc(e.msg)+'<br><small>'+esc(e.time)+'</small></div>'}).join("")}
 function renderAll(){renderStats();renderStops();renderDetail();renderMap();renderDriver();renderScan();renderEvents()}
-function goPage(pg){currentPage=pg;document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("active",b.dataset.page===pg)});document.querySelectorAll(".page").forEach(function(p){p.classList.toggle("active",p.id===pg)});if(pg==="dispatch")setTimeout(function(){renderMap()},100);if(pg==="driver")renderDriver();if(pg==="scan"){renderScan();if(state.scanDevice==="hardware")setTimeout(focusScanInput,80)}else stopCamera();window.scrollTo({top:0,behavior:"smooth"})}
-document.querySelectorAll("nav button").forEach(function(b){b.onclick=function(){goPage(b.dataset.page)}});
+function goPage(pg){if(!canAccess(pg))return;currentPage=pg;document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("active",b.dataset.page===pg)});document.querySelectorAll(".page").forEach(function(p){p.classList.toggle("active",p.id===pg)});if(pg==="dispatch")setTimeout(function(){renderMap()},100);if(pg==="driver")renderDriver();if(pg==="scan"){renderScan();if(state.scanDevice==="hardware")setTimeout(focusScanInput,80)}else stopCamera();window.scrollTo({top:0,behavior:"smooth"})}
+document.querySelectorAll("#appNav button").forEach(function(b){b.onclick=function(){goPage(b.dataset.page)}});
+ROUTES.forEach(function(r){var el=document.createElement("option");el.value=r.id;el.textContent=r.driver+" · "+r.name;$("loginDriver").append(el)});
+$("chooseAdmin").onclick=function(){loginChoice="admin";$("chooseAdmin").classList.add("on");$("chooseDriver").classList.remove("on");$("driverLoginFields").style.display="none";$("pinLabel").textContent="管理演示口令";$("loginPin").value="";$("loginPin").focus()};
+$("chooseDriver").onclick=function(){loginChoice="driver";$("chooseDriver").classList.add("on");$("chooseAdmin").classList.remove("on");$("driverLoginFields").style.display="block";$("pinLabel").textContent="司机演示口令";$("loginPin").value="";$("loginPin").focus()};
+$("loginBtn").onclick=doLogin;$("loginPin").onkeydown=function(e){if(e.key==="Enter")doLogin()};
+$("logoutBtn").onclick=function(){session=null;sessionStorage.removeItem(SESSION_KEY);applySession();flash("已退出演示账号")};
 $("routeFilter").onchange=function(){filter=this.value;renderAll();if(map){var arr=sorted(filter),pts=arr.map(function(s){return [s.lat,s.lon]});if(pts.length)map.fitBounds(pts,{padding:[45,45],maxZoom:12})}};
-$("driverRoute").onchange=function(){driverRoute=this.value;selectedDriver=sorted(driverRoute)[0]?.id||"";renderDriver()};
-$("scanRoute").onchange=function(){scanRoute=this.value};
+$("driverRoute").onchange=function(){if(isDriver()){this.value=session.route;return}driverRoute=this.value;selectedDriver=sorted(driverRoute)[0]?.id||"";renderDriver()};
+$("scanRoute").onchange=function(){if(isDriver()){this.value=session.route;return}scanRoute=this.value};
 $("labelRoute").onchange=function(){labelRoute=this.value;renderScan()};
 $("importRoute").onchange=function(){importRoute=this.value};
 $("simulateBtn").onclick=simulateAdd;$("simulateBtn2").onclick=simulateAdd;$("optBtn").onclick=optimize;
 $("publishBtn").onclick=function(){state.publishedAt=new Date().toISOString();note("办公室发布最新配送顺序到演示司机端");flash("路线已发布（仅本设备 Demo 内同步）")};
-$("loadMode").onclick=function(){state.mode="load";renderScan()};$("deliverMode").onclick=function(){state.mode="deliver";renderScan()};
+$("loadMode").onclick=function(){if(isDriver()){flash("司机端只能扫码下货");return}state.mode="load";renderScan()};$("deliverMode").onclick=function(){state.mode="deliver";renderScan()};
 function focusScanInput(){if(currentPage==="scan"&&state.scanDevice==="hardware")$("scanCode").focus()}
 var scanAutoTimer=null;
 function scanTyped(){clearTimeout(scanAutoTimer);var code=$("scanCode").value.trim();if(/^JFT-[A-Z0-9-]+-\d{3,}$/i.test(code))scanAutoTimer=setTimeout(function(){commitScan($("scanCode").value);focusScanInput()},480)}
@@ -310,6 +363,6 @@ finally{cameraBusy=false}
 }
 $("stopCamera").onclick=stopCamera;
 $("startCamera").onclick=startCameraStream;
-populate();renderAll();window.addEventListener("beforeunload",stopCamera);
+populate();applySession();renderAll();window.addEventListener("beforeunload",stopCamera);
 })();
 </script></body></html>
