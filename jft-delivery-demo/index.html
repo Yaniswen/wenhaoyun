@@ -26,6 +26,10 @@ select,input,textarea{border:1px solid #cfdae7;border-radius:9px;padding:10px 11
 .driver-grid{display:grid;grid-template-columns:minmax(280px,500px) minmax(310px,1fr);gap:14px}.driver-stop{padding:11px 12px;border:1px solid #dfebf4;border-radius:10px;margin:10px 0}.driver-stop.current{border:2px solid #3387c4;background:#f2faff}.item-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid #e8edf4}.item-desc{font-size:12px;color:#6e8091;margin-top:2px}
 .mode{display:flex;gap:5px;background:#edf2f8;border-radius:10px;padding:4px}.mode button{background:transparent;color:#5b6f80;font-size:13px;flex:1}.mode button.on{background:#fff;color:#155f9e;box-shadow:0 1px 4px #18345016}
 .code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.2px;font-size:12px}
+.scan-chooser button{min-height:50px;line-height:1.4}.scan-device-desc{font-size:12px;color:#597186;line-height:1.6;margin:10px 0}.scan-device-panel{padding:12px;border:1px solid #e0e9f2;border-radius:10px;margin-top:11px;background:#fbfdff}
+#scanCode:focus{border-color:#176bb3;outline:2px solid #b8dfff;outline-offset:1px}
+#camView{background:#142536;min-height:160px;max-height:320px;object-fit:cover}
+.camera-status{font-size:12px;color:#496579;margin:8px 0}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.label-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:14px}.sticker{border-left:7px solid #269b78;background:#fff;border-radius:3px;outline:1px solid #e2e2e2;padding:8px;display:flex;justify-content:space-between;gap:5px;min-height:88px}.sticker small{font-size:8px}.sticker .name{font-size:15px;font-weight:900;margin:3px 0}.sticker .item{font-size:11px;font-weight:700}.sticker .piece{font-size:20px;font-weight:900;margin-top:7px}.qr{width:63px;height:63px;flex-shrink:0}.qr canvas,.qr img{width:63px!important;height:63px!important}
 .log{padding:9px 2px;border-bottom:1px solid #e3eaf2;font-size:13px}.log small{color:#7790a0;font-size:11px}
 .modal{position:fixed;inset:0;background:#061a2e88;display:none;align-items:center;justify-content:center;z-index:1100;padding:15px}.modal.show{display:flex}.modal-inner{width:min(550px,100%);max-height:85vh;overflow:auto;background:white;border-radius:15px;padding:20px}.modal h2{margin:0 0 14px;font-size:19px}
@@ -52,7 +56,20 @@ select,input,textarea{border:1px solid #cfdae7;border-radius:9px;padding:10px 11
 </section>
 <section id="scan" class="page">
  <div class="topline"><div><h1>标签 & 上下货扫码</h1><div class="subtitle">每件货物都有唯一编号；扫码装车和卸货使用相同编号。</div></div><div class="controls"><button class="primary" id="printBtn">打印当前路线标签</button></div></div>
- <div class="two"><div class="card"><div class="section-title">扫码工作台</div><div class="field"><label>操作路线</label><select id="scanRoute"></select></div><div class="mode"><button id="loadMode" class="on">扫码上车</button><button id="deliverMode">扫码下货</button></div><div class="field" style="margin-top:12px"><label>扫描结果 / 手动输入标签编号</label><input id="scanCode" placeholder="例如 JFT-S102-001" class="code"></div><div class="controls"><button class="primary" id="confirmScan">确认扫码</button><button class="btn" id="startCamera">打开相机扫码</button><button class="ghost" id="stopCamera" style="display:none">关闭相机</button></div><video id="camView" autoplay playsinline muted></video><div class="notice" id="scanHint">支持手动输入和扫码；如浏览器不支持摄像头二维码识别，可以使用编号测试。</div><div id="scanHistory"></div></div>
+ <div class="two"><div class="card"><div class="section-title">扫码工作台</div><div class="field"><label>操作路线</label><select id="scanRoute"></select></div><div class="mode"><button id="loadMode" class="on">扫码上车</button><button id="deliverMode">扫码下货</button></div>
+<div class="section-title" style="margin-top:16px;margin-bottom:7px">选择扫码方式</div>
+<div class="mode scan-chooser"><button id="hardwareDevice" class="on">▦ 扫码枪<br><small>USB / 蓝牙</small></button><button id="cameraDevice">▣ 手机相机<br><small>拍摄二维码</small></button></div>
+<div id="hardwarePanel" class="scan-device-panel">
+ <div class="scan-device-desc">扫码枪连接手机、平板或电脑后，点击下面输入框，扫描货物标签即可。支持模拟键盘输入的 USB / 蓝牙扫码器。</div>
+ <div class="field"><label>标签二维码编号</label><input id="scanCode" autocomplete="off" spellcheck="false" inputmode="text" placeholder="点击此处，然后使用扫码枪扫描" class="code"></div>
+ <div class="controls"><button class="primary" id="confirmScan">确认扫码 / 手动输入</button><button class="ghost compact" id="focusScan">重新聚焦输入框</button></div>
+</div>
+<div id="cameraPanel" class="scan-device-panel" style="display:none">
+ <div class="scan-device-desc">允许使用后置摄像头，对准标签二维码连续扫描；切换下一张标签即可继续。</div>
+ <div class="controls"><button class="primary" id="startCamera">开启摄像头</button><button class="ghost" id="stopCamera" style="display:none">关闭摄像头</button></div>
+ <video id="camView" autoplay playsinline muted></video><div id="cameraStatus" class="camera-status">点击开启摄像头扫码。</div>
+</div>
+<div class="notice" id="scanHint">扫码结果会根据当前的「上车 / 下货」模式自动记录，重复扫描或扫错路线会提醒。</div><div id="scanHistory"></div></div>
  <div class="card"><div class="section-title">标签打印预览 <span class="tag" id="labelCount"></span></div><div class="field"><label>显示路线</label><select id="labelRoute"></select></div><p class="subtitle">打印沿用 Avery 5160/8160（Letter，每页30张）。以下为屏幕缩略预览，缺货不自动视为已装车。</p><div id="labelPreview" class="label-list"></div></div></div>
 </section>
 <section id="import" class="page">
@@ -64,6 +81,7 @@ select,input,textarea{border:1px solid #cfdae7;border-radius:9px;padding:10px 11
 <div id="toast" class="toast"></div><div id="printArea"></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
 (function(){
 "use strict";
@@ -85,7 +103,7 @@ var s=[
 return {stops:s,events:[{time:new Date().toLocaleTimeString("zh-CN"),msg:"Demo 初始化：示例客户、订单和标签已生成"}],mode:"load",lastSync:null,driverLoc:null,publishedAt:null}
 }
 var STORAGE="jft_delivery_os_demo_v1";
-var state;try{state=JSON.parse(localStorage.getItem(STORAGE))}catch(e){}if(!state||!Array.isArray(state.stops))state=makeDefault();
+var state;try{state=JSON.parse(localStorage.getItem(STORAGE))}catch(e){}if(!state||!Array.isArray(state.stops))state=makeDefault();if(!["hardware","camera"].includes(state.scanDevice))state.scanDevice="hardware";
 var selected="S102",selectedDriver="S101",currentPage="dispatch",map,mapLayer,warehouseMarker,vehicleMarker,scanStream,scanTimer,scanHistory=[];
 var filter="all",scanRoute="DT",labelRoute="DT",driverRoute="DT",importRoute="DT";
 var toastTimer;
@@ -155,6 +173,11 @@ $("goNav").onclick=function(){navTo(s)};$("goScan").onclick=function(){scanRoute
 }
 function renderScan(){
 $("loadMode").classList.toggle("on",state.mode==="load");$("deliverMode").classList.toggle("on",state.mode==="deliver");
+$("hardwareDevice").classList.toggle("on",state.scanDevice==="hardware");
+$("cameraDevice").classList.toggle("on",state.scanDevice==="camera");
+$("hardwarePanel").style.display=state.scanDevice==="hardware"?"block":"none";
+$("cameraPanel").style.display=state.scanDevice==="camera"?"block":"none";
+$("scanHint").textContent=state.scanDevice==="hardware"?"扫码枪模式：先扫货物标签，设备输入完整编号并回车后自动确认。支持手动输入；扫错路线和重复扫描会立即报警。":"手机相机模式：打开后置摄像头，连续对准每张标签上的二维码；保持镜头稳定，扫码结果会自动记录。";
 var arr=state.stops.filter(function(s){return s.route===labelRoute}),all=[];arr.forEach(function(s){s.pieces.forEach(function(p,i){all.push({p:p,s:s,i:i})})});
 $("labelCount").textContent=all.length+" 张";$("labelPreview").innerHTML=all.slice(0,24).map(function(o){
 return '<div class="sticker"><div style="min-width:0;overflow:hidden"><small>JFT FOOD DISTRIBUTION</small><div class="name">'+esc(o.s.customer)+'</div><div class="item">'+esc(o.p.name)+'</div><div class="piece">'+(o.i+1)+"/"+o.s.pieces.length+'</div><small>'+esc(o.p.qty)+' · '+esc(o.s.route)+'</small></div><div class="qr" data-code="'+esc(o.p.id)+'"></div></div>'
@@ -208,7 +231,7 @@ fixed.forEach(function(s,i){s.order=i+1});while(remaining.length){remaining.sort
 }
 function renderEvents(){$("eventLog").innerHTML=state.events.map(function(e){return '<div class="log">'+esc(e.msg)+'<br><small>'+esc(e.time)+'</small></div>'}).join("")}
 function renderAll(){renderStats();renderStops();renderDetail();renderMap();renderDriver();renderScan();renderEvents()}
-function goPage(pg){currentPage=pg;document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("active",b.dataset.page===pg)});document.querySelectorAll(".page").forEach(function(p){p.classList.toggle("active",p.id===pg)});if(pg==="dispatch")setTimeout(function(){renderMap()},100);if(pg==="driver")renderDriver();if(pg==="scan")renderScan();window.scrollTo({top:0,behavior:"smooth"})}
+function goPage(pg){currentPage=pg;document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("active",b.dataset.page===pg)});document.querySelectorAll(".page").forEach(function(p){p.classList.toggle("active",p.id===pg)});if(pg==="dispatch")setTimeout(function(){renderMap()},100);if(pg==="driver")renderDriver();if(pg==="scan"){renderScan();if(state.scanDevice==="hardware")setTimeout(focusScanInput,80)}else stopCamera();window.scrollTo({top:0,behavior:"smooth"})}
 document.querySelectorAll("nav button").forEach(function(b){b.onclick=function(){goPage(b.dataset.page)}});
 $("routeFilter").onchange=function(){filter=this.value;renderAll();if(map){var arr=sorted(filter),pts=arr.map(function(s){return [s.lat,s.lon]});if(pts.length)map.fitBounds(pts,{padding:[45,45],maxZoom:12})}};
 $("driverRoute").onchange=function(){driverRoute=this.value;selectedDriver=sorted(driverRoute)[0]?.id||"";renderDriver()};
@@ -218,7 +241,16 @@ $("importRoute").onchange=function(){importRoute=this.value};
 $("simulateBtn").onclick=simulateAdd;$("simulateBtn2").onclick=simulateAdd;$("optBtn").onclick=optimize;
 $("publishBtn").onclick=function(){state.publishedAt=new Date().toISOString();note("办公室发布最新配送顺序到演示司机端");flash("路线已发布（仅本设备 Demo 内同步）")};
 $("loadMode").onclick=function(){state.mode="load";renderScan()};$("deliverMode").onclick=function(){state.mode="deliver";renderScan()};
-$("confirmScan").onclick=function(){commitScan($("scanCode").value)};$("scanCode").onkeydown=function(e){if(e.key==="Enter")commitScan($("scanCode").value)};
+function focusScanInput(){if(currentPage==="scan"&&state.scanDevice==="hardware")$("scanCode").focus()}
+var scanAutoTimer=null;
+function scanTyped(){clearTimeout(scanAutoTimer);var code=$("scanCode").value.trim();if(/^JFT-[A-Z0-9-]+-\d{3,}$/i.test(code))scanAutoTimer=setTimeout(function(){commitScan($("scanCode").value);focusScanInput()},480)}
+$("hardwareDevice").onclick=function(){state.scanDevice="hardware";save();stopCamera();renderScan();focusScanInput()};
+$("cameraDevice").onclick=function(){state.scanDevice="camera";save();renderScan();startCameraStream()};
+$("focusScan").onclick=focusScanInput;
+$("confirmScan").onclick=function(){clearTimeout(scanAutoTimer);commitScan($("scanCode").value);focusScanInput()};
+$("scanCode").oninput=scanTyped;
+$("scanCode").onkeydown=function(e){if(e.key==="Enter"||e.key==="Tab"){e.preventDefault();clearTimeout(scanAutoTimer);commitScan($("scanCode").value);focusScanInput()}};
+
 $("printBtn").onclick=printLabels;$("previewImportBtn").onclick=importPaste;$("samplePasteBtn").onclick=function(){$("pasteArea").value="序号\t商家名称\t产品名称\t规格\t数量\t价格\tSales\n1\tSea Smoke\tGreen Pepper XXL\t10KG\t6 cs\t\t\n\t\tRomaine Hearts\t\t2 bag\t\t\n2\tNew Demo Customer\tCucumber\t\t3 cs\t\t";flash("已填入示例表格，点击导入")};
 $("resetBtn").onclick=function(){if(confirm("确定清空本设备的 Demo 操作并恢复演示数据？")){state=makeDefault();filter="all";scanRoute="DT";labelRoute="DT";driverRoute="DT";selected="S102";populate();save();renderAll();flash("演示数据已重置")}};
 $("addStopBtn").onclick=function(){$("addModal").classList.add("show");$("newRoute").value=filter==="all"?"DT":filter};
@@ -227,16 +259,57 @@ $("saveNewStop").onclick=function(){var name=$("newName").value.trim(),qty=Numbe
 var sid="S"+Date.now().toString(36);state.stops.push({id:sid,route:rid,customer:name,lat:lat,lon:lon,priority:Number($("newPriority").value),deadline:$("newDeadline").value,order:sorted(rid).length+1,pieces:mkPieces(sid,qty,$("newItem").value||"商品")});selected=sid;filter=rid;$("addModal").classList.remove("show");note("新增站点："+name+"，"+qty+"件待装车");populate();renderAll();flash("已加入地图并生成唯一标签")};
 $("sendGps").onclick=function(){if(!navigator.geolocation){flash("当前浏览器不支持定位");return}navigator.geolocation.getCurrentPosition(function(pos){state.driverLoc={lat:pos.coords.latitude,lon:pos.coords.longitude,time:new Date().toLocaleTimeString("zh-CN")};note("司机手动上报一次GPS位置");renderMap();flash("位置已记录，仅本设备Demo可见")},function(err){flash("无法定位，请检查浏览器定位授权："+err.message)},{enableHighAccuracy:true,timeout:12000})};
 $("driverRefresh").onclick=function(){renderDriver();flash("已刷新")};
-var detector;
-function stopCamera(){if(scanTimer)clearInterval(scanTimer);scanTimer=null;if(scanStream){scanStream.getTracks().forEach(function(t){t.stop()});scanStream=null}$("camView").style.display="none";$("stopCamera").style.display="none";$("startCamera").style.display="inline-block"}
+var detector=null,cameraBusy=false,cameraLastCode="",cameraMissedFrames=0,cameraCanvas=document.createElement("canvas");
+function stopCamera(){
+if(scanTimer)clearInterval(scanTimer);scanTimer=null;
+if(scanStream){scanStream.getTracks().forEach(function(t){t.stop()});scanStream=null}
+$("camView").pause();$("camView").srcObject=null;$("camView").style.display="none";
+$("stopCamera").style.display="none";$("startCamera").style.display="inline-block";
+cameraBusy=false;cameraLastCode="";cameraMissedFrames=0;
+if($("cameraStatus"))$("cameraStatus").textContent="摄像头已关闭。";
+}
+function scanCameraFrame(){
+var video=$("camView"),w=video.videoWidth,h=video.videoHeight;
+if(!w||!h||!window.jsQR)return "";
+var dw=Math.min(w,720),dh=Math.round(h*dw/w);
+cameraCanvas.width=dw;cameraCanvas.height=dh;
+var ctx=cameraCanvas.getContext("2d",{willReadFrequently:true});
+ctx.drawImage(video,0,0,dw,dh);
+var frame=ctx.getImageData(0,0,dw,dh),qr=window.jsQR(frame.data,dw,dh,{inversionAttempts:"attemptBoth"});
+return qr&&qr.data?qr.data:"";
+}
+async function startCameraStream(){
+if(scanStream)return;
+if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){flash("当前浏览器不支持相机访问，改用扫码枪输入框");$("cameraStatus").textContent="浏览器不支持相机访问。";return}
+if(!window.BarcodeDetector&&!window.jsQR){flash("二维码识别组件未加载，请联网后重试，或使用扫码枪");$("cameraStatus").textContent="二维码识别模块未加载。";return}
+try{
+if(window.BarcodeDetector){try{detector=new BarcodeDetector({formats:["qr_code"]})}catch(e){detector=null}}else detector=null;
+scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}},audio:false});
+var video=$("camView");video.srcObject=scanStream;video.style.display="block";await video.play();
+$("stopCamera").style.display="inline-block";$("startCamera").style.display="none";
+$("cameraStatus").textContent="相机已连接 · 请对准标签二维码，识别后可继续扫下一件";
+scanTimer=setInterval(async function(){
+if(cameraBusy||!video.videoWidth||state.scanDevice!=="camera"||currentPage!=="scan")return;
+cameraBusy=true;
+try{
+var result="";
+if(detector){try{var codes=await detector.detect(video);if(codes.length)result=codes[0].rawValue}catch(e){detector=null}}
+if(!result)result=scanCameraFrame();
+if(result){
+cameraMissedFrames=0;
+if(result!==cameraLastCode){
+cameraLastCode=result;
+$("cameraStatus").textContent="识别到 "+result+" · 请扫描下一件";
+commitScan(result);
+}
+}else if(++cameraMissedFrames>=3){cameraLastCode="";cameraMissedFrames=3}
+}catch(e){$("cameraStatus").textContent="识别失败，可调整距离和光线重试"}
+finally{cameraBusy=false}
+},330);
+}catch(e){stopCamera();flash("无法打开摄像头："+(e.message||e));$("cameraStatus").textContent="无法打开摄像头，请检查浏览器授权或切换扫码枪。"}
+}
 $("stopCamera").onclick=stopCamera;
-$("startCamera").onclick=async function(){
-if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){flash("浏览器不支持摄像头权限，请手动输入");return}
-if(!("BarcodeDetector" in window)){flash("此浏览器不支持原生二维码检测，请手动输入编号");return}
-try{detector=new BarcodeDetector({formats:["qr_code"]});scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});$("camView").srcObject=scanStream;$("camView").style.display="block";$("stopCamera").style.display="inline-block";$("startCamera").style.display="none";
-scanTimer=setInterval(async function(){if(!$("camView").videoWidth)return;try{var codes=await detector.detect($("camView"));if(codes.length){var val=codes[0].rawValue;stopCamera();commitScan(val)}}catch(e){}},650);
-}catch(e){stopCamera();flash("无法打开摄像头："+e.message)}
-};
+$("startCamera").onclick=startCameraStream;
 populate();renderAll();window.addEventListener("beforeunload",stopCamera);
 })();
 </script></body></html>
