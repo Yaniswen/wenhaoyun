@@ -274,23 +274,29 @@ function classifyItem(item,spec){
 }
 function classify(n,spec){return classifyItem(n,spec).category;}
 function readWeightList(q,spec){
- const a=valid(q),b=valid(spec),context=/(?:称重|weigh|weight|kg|公斤|lb|lbs|磅)/i.test(a+' '+b);
+ const a=valid(q),b=valid(spec);
+ const context=/(?:称重|weigh|weight|kg|公斤|lb|lbs|磅)/i.test(a+' '+b);
  for(const raw of [a,b]){
-  if(!/[+＋]/.test(raw))continue;
+  if(!/[+＋\r\n]/.test(raw) && !(context&&/\d+(?:\.\d+)?\s+\d+(?:\.\d+)?/.test(raw)))continue;
   let text=raw.replace(/＋/g,'+').replace(/（/g,'(').replace(/）/g,')').trim();
-  text=text.replace(/^\d+(?:\.\d+)?\s*(?:cases?|cs|bags?|箱|袋)(?=$|[\s+,:：]|称重)/i,'').trim();
-  text=text.replace(/^(?:称重|weigh(?:t)?|重量)\s*(?:\(\s*(?:kg|lb|公斤|磅)\s*\))?\s*[:：]?\s*/i,'').trim().replace(/^\+\s*/,'');
-  const terms=text.split('+').map(x=>x.trim().replace(/^\(/,'').replace(/\)$/,''));
-  if(terms.length<2||terms.some(x=>!x))continue;
-  const parsed=terms.map(x=>x.match(/^(\d+(?:\.\d+)?)\s*(kg|kgs|lb|lbs|公斤|磅)?$/i));
-  if(parsed.some(x=>!x)||(!context&&!parsed.some(x=>x[1].includes('.'))))continue;
-  const units=parsed.filter(x=>x[2]).map(x=>/^(lb|磅)/i.test(x[2])?'lb':'kg');
-  if(new Set(units).size>1)return {values:[],error:'同时出现 kg 和 lb，请统一单位'};
-  const unit=units[0]||(/\b(?:lb|lbs)\b|磅/i.test(b)?'lb':/(?:kg|公斤)/i.test(b)?'kg':'');
-  return {values:parsed.map(x=>x[1]+(unit?' '+unit:'')),error:null};
+  text=text.replace(/^\d+(?:\.\d+)?\s*(?:cases?|cs|bags?|箱|袋)\s*(?:称重|weigh(?:t)?|重量)?\s*[:：]?\s*/i,'').trim();
+  text=text.replace(/^(?:称重|weigh(?:t)?|重量)\s*(?:\(\s*(?:kg|lb|公斤|磅)\s*\))?\s*[:：]?\s*/i,'').trim();
+  text=text.replace(/^(?:special\s*discount|discount)\s*[:：]?\s*/i,'').trim();
+  // A Google Sheets cell can contain several lines, with or without + between lines.
+  text=text.replace(/(\d)\s*(kg|kgs|lb|lbs|公斤|磅)(?=\s|[+\r\n]|$)/gi,'$1$2');
+  const terms=text.split(/[+\s]+/).filter(Boolean);
+  if(terms.length<2)continue;
+  const parsed=terms.map(term=>term.match(/^(\d+(?:\.\d+)?)(kg|kgs|lb|lbs|公斤|磅)?$/i));
+  if(parsed.some(m=>!m)||(!context&&!parsed.some(m=>m[1].includes('.')||m[2])))continue;
+  const units=parsed.filter(m=>m[2]).map(m=>/^(lb|lbs|磅)/i.test(m[2])?'lb':'kg');
+  if(new Set(units).size>1)return {values:[],error:'重量列表混用了 kg 和 lb，请统一单位'};
+  // JFT's numeric case-weight lists default to kg unless the pasted record says lb.
+  const unit=units[0]||(/\b(?:lb|lbs)\b|磅/i.test(a+' '+b)?'lb':'kg');
+  return {values:parsed.map(m=>m[1]+' '+unit),error:null};
  }
  return {values:[],error:null};
 }
+
 function standardWeight(name,spec){
  const item=valid(name),detail=valid(spec);
  const explicit=(item+' '+detail).match(/(?:定重|fixed(?:\s+weight)?|标准净重)\s*[:：]?\s*(\d+(?:\.\d+)?)\s*(kg|kgs|公斤|lb|lbs|磅)/i);
@@ -326,8 +332,11 @@ function pieces(q,spec,name){
  if(!matched&&(!a||/(?:kg|lb|称重|缺货|weigh)/i.test(a)||/(?:称重|weigh)/i.test(b)))matched=parseUnits(b);
  const list=readWeightList(a,b);
  const count=matched&&Number.isInteger(matched.number)&&matched.number>0&&matched.number<=500?matched.number:list.values.length>1?list.values.length:1;
- const mismatch=!!(list.error||(list.values.length>1&&matched&&matched.number!==list.values.length));
- const mismatchText=list.error||(mismatch?'写了'+matched.number+'箱/袋，实际只有'+list.values.length+'个重量':'');
+ const fixed=standardWeight(item,b);
+ const perCaseExpected=!!(matched?.number>1&&/(?:称重|weigh|weight)/i.test(b+' '+a));
+ const missingWeights=perCaseExpected&&!list.values.length&&(!fixed||/[+＋\r\n]/.test(a));
+ const mismatch=!!(list.error||(list.values.length>0&&matched&&matched.number!==list.values.length)||missingWeights);
+ const mismatchText=list.error||(missingWeights?'已要求逐箱称重，但未识别到完整重量列表，请核对数量栏':mismatch?'写了'+matched.number+'箱/袋，实际只有'+list.values.length+'个重量':'');
  let weights=mismatch?[]:list.values;
  if(!weights.length&&count===1&&/(?:称重|weigh|kg|lb|公斤|磅)/i.test(a+' '+b)){
   const single=a.match(/^(\d+(?:\.\d+)?)\s*(kg|lb|lbs|kgs|公斤|磅)?$/i);
@@ -336,7 +345,6 @@ function pieces(q,spec,name){
    if(unit)weights=[single[1]+' '+unit];
   }
  }
- const fixed=standardWeight(item,b);
  const casePacks=matched?.unit==='cs'?packsPerCase(item,b):'';
  const loose=(!matched||matched.unit!=='cs')?loosePackQty(a):'';
  let quantity=matched&&count>1?'1 '+matched.unit:(a||b||'1');
@@ -348,11 +356,35 @@ function colorOf(s){
  let h=0;for(const ch of s.toLowerCase())h=((h*31)+ch.charCodeAt(0))>>>0;
  return colors[h%colors.length];
 }
+function parsePastedTSV(raw){
+ // Google Sheets quotes cells that contain embedded newlines or tabs.
+ const rows=[],row=[];let cell='',insideQuotes=false;
+ for(let i=0;i<raw.length;i++){
+  const ch=raw[i];
+  if(ch==='"'){
+   if(insideQuotes&&raw[i+1]==='"'){cell+='"';i++;continue}
+   if(insideQuotes){insideQuotes=false;continue}
+   if(cell===''){insideQuotes=true;continue}
+   cell+=ch;continue;
+  }
+  if(!insideQuotes&&(ch==='\t'||ch==='\n'||ch==='\r')){
+   row.push(valid(cell));cell='';
+   if(ch!=='\t'){
+    rows.push(row.slice());row.length=0;
+    if(ch==='\r'&&raw[i+1]==='\n')i++;
+   }
+  }else if(insideQuotes&&ch==='\r'){
+   cell+='\n';if(raw[i+1]==='\n')i++;
+  }else cell+=ch;
+ }
+ if(cell.length||row.length){row.push(valid(cell));rows.push(row)}
+ return rows;
+}
 function process(){
  const raw=el('paste').value;
  if(!raw.trim()){el('status').textContent='请先粘贴联合出单表。';return}
  records.splice(0);groupCounter=0;
- const rows=raw.replace(/\r/g,'').split('\n').map(line=>line.split('\t').map(valid));
+ const rows=parsePastedTSV(raw);
  const header=rows.find(r=>r.some(c=>c==='商家名称') && r.some(c=>c==='产品名称'));
  let groups=[];
  if(header){
