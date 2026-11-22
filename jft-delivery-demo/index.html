@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>JFT Delivery OS Demo</title><meta name="viewport" content="width=device-width, initial-scale=1" /></head><body style="margin:0;padding:0;overflow:hidden"><iframe title="JFT Delivery OS" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;zh-CN&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1,viewport-fit=cover&quot;&gt;
+&lt;title&gt;JFT Delivery OS · Demo&lt;/title&gt;
+&lt;link rel=&quot;stylesheet&quot; href=&quot;https://unpkg.com/leaflet@1.9.4/dist/leaflet.css&quot;&gt;
+&lt;style&gt;
+:root{font-family:Inter,-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,&quot;Microsoft Yahei&quot;,Arial,sans-serif;color:#182639;background:#f3f6fa}
+*{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:9px;font-weight:650;padding:10px 13px}button:disabled{opacity:.45;cursor:not-allowed}
+header{background:#10273d;color:#fff;padding:17px max(20px,calc((100vw - 1480px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{font-size:20px;font-weight:850;letter-spacing:-.4px}.brand small{display:block;font-size:11px;font-weight:450;color:#b5c9db;margin-top:3px}.demo-pill{font-size:11px;border:1px solid #6590b1;border-radius:40px;padding:6px 11px;color:#d9eaff;background:#254866}
+nav{background:#fff;border-bottom:1px solid #e0e8f1;padding:0 22px;display:flex;gap:8px;overflow:auto;position:sticky;top:0;z-index:600}nav button{border-radius:0;background:none;padding:15px 16px;color:#526477;white-space:nowrap;border-bottom:3px solid transparent}nav button.active{color:#1663a2;border-bottom-color:#1773bd}
+main{max-width:1480px;margin:0 auto;padding:18px 20px 70px}.page{display:none}.page.active{display:block}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}.topline h1{font-size:21px;margin:0}.subtitle{font-size:12px;color:#6b7d91;margin-top:5px}
+.btn{background:#e8eef6;color:#294561}.primary{background:#176bb3;color:white}.success{background:#168765;color:white}.warn{background:#fff3df;color:#91590d}.danger{background:#fae6e5;color:#9b3434}.ghost{background:white;border:1px solid #d6e0ea;color:#354b60}.compact{padding:7px 10px;font-size:12px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.card{background:white;border:1px solid #e1e7ef;border-radius:14px;box-shadow:0 2px 10px #102b4609;padding:15px}
+.dashboard{display:grid;grid-template-columns:minmax(330px,390px) minmax(0,1fr);gap:14px;align-items:start}.sidebar{max-height:calc(100vh - 208px);overflow:auto}
+.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:11px;font-size:15px;font-weight:750}
+select,input,textarea{border:1px solid #cfdae7;border-radius:9px;padding:10px 11px;background:#fff;color:#22374e;max-width:100%}select{min-width:135px}textarea{width:100%;min-height:115px;resize:vertical}.field{display:flex;flex-direction:column;gap:5px;margin-bottom:11px}.field label{font-size:12px;color:#617589;font-weight:650}
+.notice{background:#e9f4ff;border:1px solid #cfe5ff;color:#24547d;padding:10px 12px;border-radius:9px;font-size:12px;line-height:1.6;margin:10px 0}
+.stop{border:1px solid #e5ebf2;padding:10px;border-radius:11px;margin:9px 0;background:white;cursor:pointer}.stop.sel{border-color:#2887ce;background:#eff7ff}.stop.done{opacity:.66}
+.stophead{display:flex;align-items:center;gap:9px}.index{background:#edf2f7;border-radius:8px;min-width:34px;height:34px;display:grid;place-items:center;font-size:12px;font-weight:850}
+.stopmain{flex:1;min-width:0}.stopmain b{font-size:14px}.stopmeta{font-size:11px;color:#6f7e91;margin-top:3px}.tag{display:inline-block;font-size:10px;font-weight:800;padding:4px 7px;border-radius:100px;background:#edf2f8;color:#536277}.tag.green{background:#dff6e9;color:#0f7450}.tag.orange{background:#fff0d7;color:#96600d}.tag.blue{background:#e2f2ff;color:#1a67a3}.tag.red{background:#fae7e6;color:#b23e3e}
+.stop-actions{display:flex;gap:5px;justify-content:end;margin-top:8px}.mini{padding:4px 8px;font-size:11px;background:#eff3f8;color:#4e6174}
+#map{height:min(68vh,700px);min-height:430px;border-radius:11px;z-index:1;background:#e7edf3}.map-panel{padding:10px}.map-note{display:flex;flex-wrap:wrap;gap:9px;margin-top:11px;color:#66798b;font-size:11px}.legend{display:inline-flex;align-items:center;gap:5px}.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.detail{margin-top:11px;padding:12px;border:1px solid #e0e8f1;border-radius:11px;background:#fbfdff}.detail h3{margin:0 0 7px;font-size:15px}.detail p{margin:5px 0;font-size:12px;color:#566d81}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.stat{background:#fff;border:1px solid #e1e7ef;padding:12px;border-radius:12px}.stat b{display:block;font-size:22px}.stat span{font-size:11px;color:#708092}
+.driver-grid{display:grid;grid-template-columns:minmax(280px,500px) minmax(310px,1fr);gap:14px}.driver-stop{padding:11px 12px;border:1px solid #dfebf4;border-radius:10px;margin:10px 0}.driver-stop.current{border:2px solid #3387c4;background:#f2faff}.item-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid #e8edf4}.item-desc{font-size:12px;color:#6e8091;margin-top:2px}
+.mode{display:flex;gap:5px;background:#edf2f8;border-radius:10px;padding:4px}.mode button{background:transparent;color:#5b6f80;font-size:13px;flex:1}.mode button.on{background:#fff;color:#155f9e;box-shadow:0 1px 4px #18345016}
+.code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.2px;font-size:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.label-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:14px}.sticker{border-left:7px solid #269b78;background:#fff;border-radius:3px;outline:1px solid #e2e2e2;padding:8px;display:flex;justify-content:space-between;gap:5px;min-height:88px}.sticker small{font-size:8px}.sticker .name{font-size:15px;font-weight:900;margin:3px 0}.sticker .item{font-size:11px;font-weight:700}.sticker .piece{font-size:20px;font-weight:900;margin-top:7px}.qr{width:63px;height:63px;flex-shrink:0}.qr canvas,.qr img{width:63px!important;height:63px!important}
+.log{padding:9px 2px;border-bottom:1px solid #e3eaf2;font-size:13px}.log small{color:#7790a0;font-size:11px}
+.modal{position:fixed;inset:0;background:#061a2e88;display:none;align-items:center;justify-content:center;z-index:1100;padding:15px}.modal.show{display:flex}.modal-inner{width:min(550px,100%);max-height:85vh;overflow:auto;background:white;border-radius:15px;padding:20px}.modal h2{margin:0 0 14px;font-size:19px}
+#camView{max-width:100%;display:none;margin-top:10px;border-radius:10px;width:100%;max-height:260px;object-fit:cover}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#193e5e;color:white;padding:11px 16px;border-radius:10px;z-index:1200;display:none;box-shadow:0 5px 24px #0004;max-width:90vw;text-align:center;font-size:13px}
+#printArea{display:none}
+@media(max-width:1000px){.dashboard{grid-template-columns:1fr}.sidebar{max-height:none}.driver-grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){header{padding:15px}main{padding:13px 10px 40px}nav{padding:0 8px}nav button{padding:13px 10px;font-size:12px}.brand{font-size:17px}.topline h1{font-size:19px}.card{padding:12px}.two{grid-template-columns:1fr}#map{height:400px;min-height:400px}.controls{width:100%}.controls button{flex:1}}
+@page{size:letter;margin:0}
+@media print{body *{visibility:hidden!important}#printArea,#printArea *{visibility:visible!important}#printArea{display:block!important;position:absolute;left:0;top:0;width:8.5in} .print-page{width:8.5in;height:11in;padding:.5in .1875in;display:grid;grid-template-columns:repeat(3,2.625in);grid-template-rows:repeat(10,1in);column-gap:.125in;page-break-after:always;break-after:page}.print-label{overflow:hidden;border-left:0.1in solid #269b78;padding:.03in .045in;font-family:Arial,sans-serif}.print-label .sticker{outline:none;border:0;padding:0;min-height:0;height:.92in}.print-label .name{font-size:10pt}.print-label .item{font-size:7pt}.print-label .piece{font-size:15pt}.print-label .qr{width:.65in;height:.65in}.print-label .qr canvas,.print-label .qr img{width:.65in!important;height:.65in!important}.print-page:last-child{page-break-after:auto;break-after:auto}}
+&lt;/style&gt;&lt;/head&gt;
+&lt;body&gt;&lt;header&gt;&lt;div class=&quot;brand&quot;&gt;JFT Delivery OS &lt;small&gt;Food Distribution · 调度 / 司机 / 扫码 / 标签&lt;/small&gt;&lt;/div&gt;&lt;span class=&quot;demo-pill&quot;&gt;可操作 Demo · 本机模拟数据&lt;/span&gt;&lt;/header&gt;
+&lt;nav&gt;&lt;button class=&quot;active&quot; data-page=&quot;dispatch&quot;&gt;◉ 仓库调度地图&lt;/button&gt;&lt;button data-page=&quot;driver&quot;&gt;▣ 司机端&lt;/button&gt;&lt;button data-page=&quot;scan&quot;&gt;▦ 扫码 / 标签&lt;/button&gt;&lt;button data-page=&quot;import&quot;&gt;↻ 联合出单表 / 加单&lt;/button&gt;&lt;/nav&gt;
+&lt;main&gt;
+&lt;section id=&quot;dispatch&quot; class=&quot;page active&quot;&gt;
+ &lt;div class=&quot;topline&quot;&gt;&lt;div&gt;&lt;h1&gt;仓库交互调度地图&lt;/h1&gt;&lt;div class=&quot;subtitle&quot;&gt;可选择线路、调整客户顺序、模拟加单、发布路线；地图坐标均为演示位置。&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;controls&quot;&gt;&lt;button class=&quot;btn&quot; id=&quot;optBtn&quot;&gt;智能排序（演示）&lt;/button&gt;&lt;button class=&quot;primary&quot; id=&quot;publishBtn&quot;&gt;发布到司机端&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
+ &lt;div class=&quot;stats&quot;&gt;&lt;div class=&quot;stat&quot;&gt;&lt;b id=&quot;stStops&quot;&gt;0&lt;/b&gt;&lt;span&gt;总配送站点&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;stat&quot;&gt;&lt;b id=&quot;stPieces&quot;&gt;0&lt;/b&gt;&lt;span&gt;标签件数&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;stat&quot;&gt;&lt;b id=&quot;stDone&quot;&gt;0&lt;/b&gt;&lt;span&gt;已完成站点&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;stat&quot;&gt;&lt;b id=&quot;stNew&quot;&gt;0&lt;/b&gt;&lt;span&gt;待装车 / 新加单&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;
+ &lt;div class=&quot;dashboard&quot;&gt;&lt;div class=&quot;card sidebar&quot;&gt;&lt;div class=&quot;section-title&quot;&gt;&lt;span&gt;配送站点&lt;/span&gt;&lt;span id=&quot;routeCount&quot; class=&quot;tag&quot;&gt;&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;筛选路线&lt;/label&gt;&lt;select id=&quot;routeFilter&quot;&gt;&lt;/select&gt;&lt;/div&gt;&lt;div class=&quot;controls&quot;&gt;&lt;button class=&quot;compact ghost&quot; id=&quot;addStopBtn&quot;&gt;＋ 新增站点&lt;/button&gt;&lt;button class=&quot;compact warn&quot; id=&quot;simulateBtn&quot;&gt;＋ 模拟加单&lt;/button&gt;&lt;/div&gt;&lt;div class=&quot;notice&quot;&gt;客户顺序支持 ↑ ↓ 调整或拖动。已完成的站点不会因排序或新订单被清除。&lt;/div&gt;&lt;div id=&quot;stopList&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+ &lt;div class=&quot;card map-panel&quot;&gt;&lt;div id=&quot;map&quot;&gt;&lt;/div&gt;&lt;div class=&quot;map-note&quot;&gt;&lt;span class=&quot;legend&quot;&gt;&lt;span class=&quot;dot&quot; style=&quot;background:#297ccc&quot;&gt;&lt;/span&gt;DM&lt;/span&gt;&lt;span class=&quot;legend&quot;&gt;&lt;span class=&quot;dot&quot; style=&quot;background:#12a774&quot;&gt;&lt;/span&gt;Downtown&lt;/span&gt;&lt;span class=&quot;legend&quot;&gt;&lt;span class=&quot;dot&quot; style=&quot;background:#eb8e3c&quot;&gt;&lt;/span&gt;Bedford&lt;/span&gt;&lt;span&gt;虚线/连接线为示意直线，非实际导航道路。&lt;/span&gt;&lt;/div&gt;&lt;div id=&quot;selectedDetail&quot; class=&quot;detail&quot;&gt;&lt;h3&gt;点击客户查看详情&lt;/h3&gt;&lt;p&gt;地图上客户标记和左侧列表均可点击。&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;/section&gt;
+&lt;section id=&quot;driver&quot; class=&quot;page&quot;&gt;
+ &lt;div class=&quot;topline&quot;&gt;&lt;div&gt;&lt;h1&gt;司机配送手机端&lt;/h1&gt;&lt;div class=&quot;subtitle&quot;&gt;演示扫码、导航、签收和配送进度。&lt;/div&gt;&lt;/div&gt;&lt;select id=&quot;driverRoute&quot;&gt;&lt;/select&gt;&lt;/div&gt;
+ &lt;div class=&quot;driver-grid&quot;&gt;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;section-title&quot;&gt;&lt;span&gt;我的配送路线&lt;/span&gt;&lt;span id=&quot;driverCounts&quot; class=&quot;tag blue&quot;&gt;&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;controls&quot;&gt;&lt;button class=&quot;compact btn&quot; id=&quot;sendGps&quot;&gt;发送当前位置（一次）&lt;/button&gt;&lt;button class=&quot;compact ghost&quot; id=&quot;driverRefresh&quot;&gt;刷新&lt;/button&gt;&lt;/div&gt;&lt;p class=&quot;subtitle&quot;&gt;定位只有点击后上报一次；不是后台持续GPS。&lt;/p&gt;&lt;div id=&quot;driverStops&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;section-title&quot;&gt;&lt;span&gt;当前客户详情&lt;/span&gt;&lt;span class=&quot;tag&quot; id=&quot;driverBadge&quot;&gt;未选择&lt;/span&gt;&lt;/div&gt;&lt;div id=&quot;driverDetail&quot;&gt;&lt;p&gt;请在左侧选择一个客户。&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;/section&gt;
+&lt;section id=&quot;scan&quot; class=&quot;page&quot;&gt;
+ &lt;div class=&quot;topline&quot;&gt;&lt;div&gt;&lt;h1&gt;标签 &amp; 上下货扫码&lt;/h1&gt;&lt;div class=&quot;subtitle&quot;&gt;每件货物都有唯一编号；扫码装车和卸货使用相同编号。&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;controls&quot;&gt;&lt;button class=&quot;primary&quot; id=&quot;printBtn&quot;&gt;打印当前路线标签&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
+ &lt;div class=&quot;two&quot;&gt;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;section-title&quot;&gt;扫码工作台&lt;/div&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;操作路线&lt;/label&gt;&lt;select id=&quot;scanRoute&quot;&gt;&lt;/select&gt;&lt;/div&gt;&lt;div class=&quot;mode&quot;&gt;&lt;button id=&quot;loadMode&quot; class=&quot;on&quot;&gt;扫码上车&lt;/button&gt;&lt;button id=&quot;deliverMode&quot;&gt;扫码下货&lt;/button&gt;&lt;/div&gt;&lt;div class=&quot;field&quot; style=&quot;margin-top:12px&quot;&gt;&lt;label&gt;扫描结果 / 手动输入标签编号&lt;/label&gt;&lt;input id=&quot;scanCode&quot; placeholder=&quot;例如 JFT-S102-001&quot; class=&quot;code&quot;&gt;&lt;/div&gt;&lt;div class=&quot;controls&quot;&gt;&lt;button class=&quot;primary&quot; id=&quot;confirmScan&quot;&gt;确认扫码&lt;/button&gt;&lt;button class=&quot;btn&quot; id=&quot;startCamera&quot;&gt;打开相机扫码&lt;/button&gt;&lt;button class=&quot;ghost&quot; id=&quot;stopCamera&quot; style=&quot;display:none&quot;&gt;关闭相机&lt;/button&gt;&lt;/div&gt;&lt;video id=&quot;camView&quot; autoplay playsinline muted&gt;&lt;/video&gt;&lt;div class=&quot;notice&quot; id=&quot;scanHint&quot;&gt;支持手动输入和扫码；如浏览器不支持摄像头二维码识别，可以使用编号测试。&lt;/div&gt;&lt;div id=&quot;scanHistory&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+ &lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;section-title&quot;&gt;标签打印预览 &lt;span class=&quot;tag&quot; id=&quot;labelCount&quot;&gt;&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;显示路线&lt;/label&gt;&lt;select id=&quot;labelRoute&quot;&gt;&lt;/select&gt;&lt;/div&gt;&lt;p class=&quot;subtitle&quot;&gt;打印沿用 Avery 5160/8160（Letter，每页30张）。以下为屏幕缩略预览，缺货不自动视为已装车。&lt;/p&gt;&lt;div id=&quot;labelPreview&quot; class=&quot;label-list&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;/section&gt;
+&lt;section id=&quot;import&quot; class=&quot;page&quot;&gt;
+ &lt;div class=&quot;topline&quot;&gt;&lt;div&gt;&lt;h1&gt;联合出单表同步测试&lt;/h1&gt;&lt;div class=&quot;subtitle&quot;&gt;当前 Demo 为粘贴导入/手动模拟，不会读取或写入真实 Google Sheet。&lt;/div&gt;&lt;/div&gt;&lt;button class=&quot;danger compact&quot; id=&quot;resetBtn&quot;&gt;重置 Demo 数据&lt;/button&gt;&lt;/div&gt;
+ &lt;div class=&quot;two&quot;&gt;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;section-title&quot;&gt;粘贴联合出单表&lt;/div&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;导入到指定路线&lt;/label&gt;&lt;select id=&quot;importRoute&quot;&gt;&lt;/select&gt;&lt;/div&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;从表格复制列：序号 / 商家名称 / 产品名称 / 规格 / 数量 / 价格 / Sales&lt;/label&gt;&lt;textarea id=&quot;pasteArea&quot; placeholder=&quot;序号&amp;#9;商家名称&amp;#9;产品名称&amp;#9;规格&amp;#9;数量&amp;#9;价格&amp;#9;Sales&amp;#10;1&amp;#9;Sea Smoke&amp;#9;Green Pepper XXL&amp;#9;10KG&amp;#9;2 cs&amp;#9;&amp;#9;&quot;&gt;&lt;/textarea&gt;&lt;/div&gt;&lt;div class=&quot;controls&quot;&gt;&lt;button class=&quot;primary&quot; id=&quot;previewImportBtn&quot;&gt;导入 / 识别新增商品&lt;/button&gt;&lt;button class=&quot;ghost&quot; id=&quot;samplePasteBtn&quot;&gt;填入示例&lt;/button&gt;&lt;/div&gt;&lt;div class=&quot;notice&quot;&gt;示范版按单条路线的 7 列 TSV 解析，追加或增加数量，不覆盖已扫码和已签收的记录。正式版会自动同步并处理减少、取消、改单与版本审计。&lt;/div&gt;&lt;/div&gt;
+ &lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;section-title&quot;&gt;订单更新记录&lt;/div&gt;&lt;div class=&quot;controls&quot;&gt;&lt;button class=&quot;warn compact&quot; id=&quot;simulateBtn2&quot;&gt;模拟销售加单&lt;/button&gt;&lt;/div&gt;&lt;div id=&quot;eventLog&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;/section&gt;
+&lt;/main&gt;&lt;div class=&quot;modal&quot; id=&quot;addModal&quot;&gt;&lt;div class=&quot;modal-inner&quot;&gt;&lt;div class=&quot;topline&quot;&gt;&lt;h2&gt;新增配送站点&lt;/h2&gt;&lt;button class=&quot;compact ghost&quot; id=&quot;closeModal&quot;&gt;关闭&lt;/button&gt;&lt;/div&gt;&lt;div class=&quot;two&quot;&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;客户名称&lt;/label&gt;&lt;input id=&quot;newName&quot; placeholder=&quot;客户名称&quot;&gt;&lt;/div&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;路线&lt;/label&gt;&lt;select id=&quot;newRoute&quot;&gt;&lt;/select&gt;&lt;/div&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;商品&lt;/label&gt;&lt;input id=&quot;newItem&quot; value=&quot;Green Pepper XXL&quot;&gt;&lt;/div&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;箱/袋件数&lt;/label&gt;&lt;input id=&quot;newQty&quot; type=&quot;number&quot; min=&quot;1&quot; max=&quot;100&quot; value=&quot;2&quot;&gt;&lt;/div&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;优先级（1最高）&lt;/label&gt;&lt;select id=&quot;newPriority&quot;&gt;&lt;option value=&quot;1&quot;&gt;1 · 高&lt;/option&gt;&lt;option value=&quot;2&quot; selected&gt;2 · 中&lt;/option&gt;&lt;option value=&quot;3&quot;&gt;3 · 普通&lt;/option&gt;&lt;/select&gt;&lt;/div&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;截止时间（可选）&lt;/label&gt;&lt;input id=&quot;newDeadline&quot; type=&quot;time&quot;&gt;&lt;/div&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;纬度（示例）&lt;/label&gt;&lt;input id=&quot;newLat&quot; value=&quot;44.6510&quot;&gt;&lt;/div&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;经度（示例）&lt;/label&gt;&lt;input id=&quot;newLon&quot; value=&quot;-63.5820&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class=&quot;primary&quot; id=&quot;saveNewStop&quot;&gt;添加到路线&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div id=&quot;toast&quot; class=&quot;toast&quot;&gt;&lt;/div&gt;&lt;div id=&quot;printArea&quot;&gt;&lt;/div&gt;
+&lt;script src=&quot;https://unpkg.com/leaflet@1.9.4/dist/leaflet.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(function(){
+&quot;use strict&quot;;
+var $=function(x){return document.getElementById(x)}, esc=function(x){return String(x==null?&quot;&quot;:x).replace(/[&amp;&lt;&gt;&quot;']/g,function(c){return {&quot;&amp;&quot;:&quot;&amp;amp;&quot;,&quot;&lt;&quot;:&quot;&amp;lt;&quot;,&quot;&gt;&quot;:&quot;&amp;gt;&quot;,'&quot;':&quot;&amp;quot;&quot;,&quot;'&quot;:&quot;&amp;#39;&quot;}[c]})};
+var ROUTES=[{id:&quot;DM&quot;,name:&quot;Route 1 · Dartmouth / DM&quot;,driver:&quot;Liang&quot;,color:&quot;#297ccc&quot;},{id:&quot;DT&quot;,name:&quot;Route 3 · Downtown&quot;,driver:&quot;Leon&quot;,color:&quot;#12a774&quot;},{id:&quot;BF&quot;,name:&quot;Route 2 · Bedford&quot;,driver:&quot;Xu&quot;,color:&quot;#eb8e3c&quot;}];
+function mkPieces(stop,n,name){var out=[];for(var i=1;i&lt;=n;i++)out.push({id:&quot;JFT-&quot;+stop+&quot;-&quot;+String(i).padStart(3,&quot;0&quot;),name:name,qty:&quot;1 CS&quot;,state:&quot;pending&quot;});return out}
+function makeDefault(){
+var s=[
+{id:&quot;S101&quot;,route:&quot;DT&quot;,customer:&quot;Let's Ko&quot;,lat:44.641,lon:-63.579,priority:1,deadline:&quot;11:00&quot;,order:1,pieces:mkPieces(&quot;S101&quot;,3,&quot;Spinach&quot;)},
+{id:&quot;S102&quot;,route:&quot;DT&quot;,customer:&quot;Sea Smoke&quot;,lat:44.642,lon:-63.572,priority:1,deadline:&quot;12:00&quot;,order:2,pieces:mkPieces(&quot;S102&quot;,4,&quot;Green Pepper XXL&quot;)},
+{id:&quot;S103&quot;,route:&quot;DT&quot;,customer:&quot;Cha Baa Thai Queen&quot;,lat:44.636,lon:-63.581,priority:2,deadline:&quot;&quot;,order:3,pieces:mkPieces(&quot;S103&quot;,2,&quot;Cucumber&quot;)},
+{id:&quot;S104&quot;,route:&quot;DT&quot;,customer:&quot;Nami&quot;,lat:44.649,lon:-63.576,priority:3,deadline:&quot;&quot;,order:4,pieces:mkPieces(&quot;S104&quot;,3,&quot;Romaine Hearts&quot;)},
+{id:&quot;S201&quot;,route:&quot;DM&quot;,customer:&quot;Jukai Dartmouth&quot;,lat:44.670,lon:-63.556,priority:2,deadline:&quot;&quot;,order:1,pieces:mkPieces(&quot;S201&quot;,5,&quot;Chicken Breast&quot;)},
+{id:&quot;S202&quot;,route:&quot;DM&quot;,customer:&quot;Pur &amp; Simple&quot;,lat:44.682,lon:-63.554,priority:2,deadline:&quot;&quot;,order:2,pieces:mkPieces(&quot;S202&quot;,3,&quot;Carrots&quot;)},
+{id:&quot;S203&quot;,route:&quot;DM&quot;,customer:&quot;Shanghai 360&quot;,lat:44.703,lon:-63.566,priority:3,deadline:&quot;&quot;,order:3,pieces:mkPieces(&quot;S203&quot;,2,&quot;Canola Oil&quot;)},
+{id:&quot;S301&quot;,route:&quot;BF&quot;,customer:&quot;Cha Baa Thai Bedford&quot;,lat:44.726,lon:-63.663,priority:1,deadline:&quot;11:30&quot;,order:1,pieces:mkPieces(&quot;S301&quot;,3,&quot;Broccoli Crown&quot;)},
+{id:&quot;S302&quot;,route:&quot;BF&quot;,customer:&quot;Jukai Bedford&quot;,lat:44.741,lon:-63.661,priority:2,deadline:&quot;&quot;,order:2,pieces:mkPieces(&quot;S302&quot;,3,&quot;Green Onion&quot;)}
+];
+return {stops:s,events:[{time:new Date().toLocaleTimeString(&quot;zh-CN&quot;),msg:&quot;Demo 初始化：示例客户、订单和标签已生成&quot;}],mode:&quot;load&quot;,lastSync:null,driverLoc:null,publishedAt:null}
+}
+var STORAGE=&quot;jft_delivery_os_demo_v1&quot;;
+var state;try{state=JSON.parse(localStorage.getItem(STORAGE))}catch(e){}if(!state||!Array.isArray(state.stops))state=makeDefault();
+var selected=&quot;S102&quot;,selectedDriver=&quot;S101&quot;,currentPage=&quot;dispatch&quot;,map,mapLayer,warehouseMarker,vehicleMarker,scanStream,scanTimer,scanHistory=[];
+var filter=&quot;all&quot;,scanRoute=&quot;DT&quot;,labelRoute=&quot;DT&quot;,driverRoute=&quot;DT&quot;,importRoute=&quot;DT&quot;;
+var toastTimer;
+function save(){localStorage.setItem(STORAGE,JSON.stringify(state))}
+function note(msg){state.events.unshift({time:new Date().toLocaleTimeString(&quot;zh-CN&quot;),msg:msg});state.events=state.events.slice(0,70);save()}
+function flash(msg){var t=$(&quot;toast&quot;);t.textContent=msg;t.style.display=&quot;block&quot;;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.style.display=&quot;none&quot;},3200)}
+function route(id){return ROUTES.find(function(r){return r.id===id})||ROUTES[0]}
+function sorted(id){return state.stops.filter(function(s){return id===&quot;all&quot;||s.route===id}).sort(function(a,b){return ROUTES.findIndex(function(r){return r.id===a.route})-ROUTES.findIndex(function(r){return r.id===b.route})||a.order-b.order})}
+function done(s){return s.pieces.length&gt;0&amp;&amp;s.pieces.every(function(p){return p.state===&quot;delivered&quot;})}
+function counts(s){return {all:s.pieces.length,loaded:s.pieces.filter(function(p){return p.state===&quot;loaded&quot;||p.state===&quot;delivered&quot;}).length,delivered:s.pieces.filter(function(p){return p.state===&quot;delivered&quot;}).length}}
+function badge(s){var c=counts(s);if(done(s))return '&lt;span class=&quot;tag green&quot;&gt;已送达&lt;/span&gt;';if(c.loaded===0)return '&lt;span class=&quot;tag orange&quot;&gt;待装车&lt;/span&gt;';if(c.delivered&gt;0)return '&lt;span class=&quot;tag blue&quot;&gt;部分送达&lt;/span&gt;';return '&lt;span class=&quot;tag blue&quot;&gt;已装 '+c.loaded+&quot;/&quot;+c.all+&quot;&lt;/span&gt;&quot;}
+function statusText(p){return p.state===&quot;delivered&quot;?&quot;已交付&quot;:p.state===&quot;loaded&quot;?&quot;已装车&quot;:&quot;待装车&quot;}
+function navTo(s){window.open(&quot;https://www.google.com/maps/dir/?api=1&amp;destination=&quot;+encodeURIComponent(s.lat+&quot;,&quot;+s.lon)+&quot;&amp;travelmode=driving&quot;,&quot;_blank&quot;,&quot;noopener&quot;)}
+function populate(){
+[&quot;routeFilter&quot;,&quot;driverRoute&quot;,&quot;scanRoute&quot;,&quot;labelRoute&quot;,&quot;importRoute&quot;,&quot;newRoute&quot;].forEach(function(id){
+var sel=$(id),allow=id===&quot;routeFilter&quot;;sel.innerHTML=(allow?'&lt;option value=&quot;all&quot;&gt;全部路线&lt;/option&gt;':&quot;&quot;)+ROUTES.map(function(r){return '&lt;option value=&quot;'+r.id+'&quot;&gt;'+esc(r.name)+&quot; · &quot;+esc(r.driver)+&quot;&lt;/option&gt;&quot;}).join(&quot;&quot;);
+});
+$(&quot;routeFilter&quot;).value=filter;$(&quot;driverRoute&quot;).value=driverRoute;$(&quot;scanRoute&quot;).value=scanRoute;$(&quot;labelRoute&quot;).value=labelRoute;$(&quot;importRoute&quot;).value=importRoute;
+}
+function renderStats(){var all=state.stops,cc=all.reduce(function(n,s){return n+s.pieces.length},0),loaded=all.reduce(function(n,s){return n+s.pieces.filter(function(p){return p.state===&quot;pending&quot;}).length},0);
+$(&quot;stStops&quot;).textContent=all.length;$(&quot;stPieces&quot;).textContent=cc;$(&quot;stDone&quot;).textContent=all.filter(done).length;$(&quot;stNew&quot;).textContent=loaded;}
+function selectStop(id){selected=id;renderStops();renderMap();renderDetail()}
+function moveStop(id,dir){var s=state.stops.find(function(x){return x.id===id});if(!s||done(s))return;var arr=sorted(s.route),i=arr.findIndex(function(x){return x.id===id});var j=i+dir;if(j&lt;0||j&gt;=arr.length||done(arr[j]))return;var a=arr[i].order;arr[i].order=arr[j].order;arr[j].order=a;note(&quot;办公室调整 &quot;+s.customer+&quot; 的送货顺序&quot;);renderAll()}
+function renderStops(){
+var arr=sorted(filter),out=&quot;&quot;;$(&quot;routeCount&quot;).textContent=arr.length+&quot; Stops&quot;;
+arr.forEach(function(s,i){
+var c=counts(s);out+='&lt;div class=&quot;stop '+(s.id===selected?&quot;sel &quot;:&quot;&quot;)+(done(s)?&quot;done&quot;:&quot;&quot;)+'&quot; draggable=&quot;'+(!done(s))+'&quot; data-id=&quot;'+esc(s.id)+'&quot;&gt;&lt;div class=&quot;stophead&quot;&gt;&lt;span class=&quot;index&quot; style=&quot;border-left:3px solid '+route(s.route).color+'&quot;&gt;'+(i+1)+'&lt;/span&gt;&lt;div class=&quot;stopmain&quot;&gt;&lt;b&gt;'+esc(s.customer)+'&lt;/b&gt;&lt;div class=&quot;stopmeta&quot;&gt;'+esc(route(s.route).name)+' · 优先级 '+s.priority+(s.deadline?&quot; · &quot;+esc(s.deadline)+&quot;前&quot;:&quot;&quot;)+'&lt;/div&gt;&lt;/div&gt;'+badge(s)+'&lt;/div&gt;&lt;div class=&quot;stop-actions&quot;&gt;&lt;span class=&quot;stopmeta&quot; style=&quot;margin-right:auto&quot;&gt;'+c.delivered+&quot;/&quot;+c.all+&quot; 件已交付&lt;/span&gt;&lt;button class=&quot;mini&quot; data-move=&quot;up&quot; data-id=&quot;'+s.id+'&quot;&gt;↑&lt;/button&gt;&lt;button class=&quot;mini&quot; data-move=&quot;down&quot; data-id=&quot;'+s.id+'&quot;&gt;↓&lt;/button&gt;&lt;button class=&quot;mini&quot; data-navigate=&quot;'+s.id+'&quot;&gt;导航&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;';
+});$(&quot;stopList&quot;).innerHTML=out||'&lt;p class=&quot;subtitle&quot;&gt;这条路线还没有客户&lt;/p&gt;';
+$(&quot;stopList&quot;).querySelectorAll(&quot;.stop&quot;).forEach(function(el){
+el.onclick=function(e){if(e.target.closest(&quot;button&quot;))return;selectStop(el.dataset.id)};
+el.ondragstart=function(e){e.dataTransfer.setData(&quot;text/plain&quot;,el.dataset.id)};
+el.ondragover=function(e){e.preventDefault()};
+el.ondrop=function(e){e.preventDefault();var id=e.dataTransfer.getData(&quot;text/plain&quot;),from=state.stops.find(function(x){return x.id===id}),to=state.stops.find(function(x){return x.id===el.dataset.id});if(!from||!to||from.route!==to.route||done(from)||done(to))return;var a=from.order;from.order=to.order;to.order=a;note(&quot;拖动调整配送顺序&quot;);renderAll()}
+});
+$(&quot;stopList&quot;).querySelectorAll(&quot;[data-move]&quot;).forEach(function(b){b.onclick=function(e){e.stopPropagation();moveStop(b.dataset.id,b.dataset.move===&quot;up&quot;?-1:1)}});
+$(&quot;stopList&quot;).querySelectorAll(&quot;[data-navigate]&quot;).forEach(function(b){b.onclick=function(e){e.stopPropagation();var s=state.stops.find(function(x){return x.id===b.dataset.navigate});if(s)navTo(s)}});
+}
+function renderDetail(){
+var s=state.stops.find(function(x){return x.id===selected});if(!s)return;
+var c=counts(s);$(&quot;selectedDetail&quot;).innerHTML='&lt;h3&gt;'+esc(s.customer)+' '+badge(s)+'&lt;/h3&gt;&lt;p&gt;路线：'+esc(route(s.route).name)+' | 司机：'+esc(route(s.route).driver)+'&lt;/p&gt;&lt;p&gt;优先级：'+s.priority+(s.deadline?' | 要求 '+esc(s.deadline)+'前':'')+' | 装车 '+c.loaded+&quot;/&quot;+c.all+&quot; | 已下货 &quot;+c.delivered+&quot;/&quot;+c.all+'&lt;/p&gt;&lt;p&gt;坐标：'+Number(s.lat).toFixed(4)+&quot;, &quot;+Number(s.lon).toFixed(4)+'（演示点位）&lt;/p&gt;&lt;div class=&quot;controls&quot;&gt;&lt;button class=&quot;compact primary&quot; id=&quot;detailNav&quot;&gt;打开 Google Maps&lt;/button&gt;&lt;button class=&quot;compact ghost&quot; id=&quot;detailDriver&quot;&gt;司机端查看&lt;/button&gt;&lt;/div&gt;';
+$(&quot;detailNav&quot;).onclick=function(){navTo(s)};$(&quot;detailDriver&quot;).onclick=function(){driverRoute=s.route;selectedDriver=s.id;$(&quot;driverRoute&quot;).value=driverRoute;goPage(&quot;driver&quot;)};
+}
+function renderMap(){
+if(!window.L){$(&quot;map&quot;).innerHTML='&lt;div class=&quot;notice&quot; style=&quot;margin-top:100px&quot;&gt;地图组件未载入。订单列表、导航及扫码仍可使用。&lt;/div&gt;';return}
+if(!map){map=L.map(&quot;map&quot;,{scrollWheelZoom:true}).setView([44.674,-63.607],11);L.tileLayer(&quot;https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png&quot;,{attribution:&quot;&amp;copy; OpenStreetMap contributors&quot;,maxZoom:18}).addTo(map);mapLayer=L.layerGroup().addTo(map);warehouseMarker=L.marker([44.69724,-63.6615]).addTo(map).bindPopup(&quot;JFT 仓库 · 600 Bedford Hwy&quot;)}
+mapLayer.clearLayers();
+ROUTES.forEach(function(r){
+if(filter!==&quot;all&quot;&amp;&amp;filter!==r.id)return;
+var arr=sorted(r.id),pts=[[44.69724,-63.6615]];
+arr.forEach(function(s,i){
+pts.push([s.lat,s.lon]);var color=done(s)?&quot;#8996a5&quot;:r.color;var marker=L.circleMarker([s.lat,s.lon],{radius:s.id===selected?11:9,weight:s.id===selected?3:2,color:&quot;#fff&quot;,fillColor:color,fillOpacity:1});
+marker.addTo(mapLayer).bindTooltip((i+1)+&quot;. &quot;+s.customer,{direction:&quot;top&quot;}).on(&quot;click&quot;,function(){selectStop(s.id)});
+});
+if(pts.length&gt;1)L.polyline(pts,{color:r.color,weight:3,opacity:.65,dashArray:&quot;7 5&quot;}).addTo(mapLayer);
+});
+if(state.driverLoc&amp;&amp;Number.isFinite(state.driverLoc.lat)){L.circleMarker([state.driverLoc.lat,state.driverLoc.lon],{radius:10,color:&quot;#101a29&quot;,weight:3,fillColor:&quot;#ffce39&quot;,fillOpacity:1}).addTo(mapLayer).bindPopup(&quot;司机手动上报位置：&quot;+esc(state.driverLoc.time))}
+setTimeout(function(){map.invalidateSize()},70);
+}
+function renderDriver(){
+var arr=sorted(driverRoute);$(&quot;driverCounts&quot;).textContent=arr.filter(done).length+&quot;/&quot;+arr.length+&quot; 已完成&quot;;
+$(&quot;driverStops&quot;).innerHTML=arr.map(function(s,i){return '&lt;div class=&quot;driver-stop '+(s.id===selectedDriver?&quot;current&quot;:&quot;&quot;)+'&quot; data-driver-id=&quot;'+s.id+'&quot;&gt;&lt;div style=&quot;display:flex;justify-content:space-between;gap:8px&quot;&gt;&lt;b&gt;'+(i+1)+&quot;. &quot;+esc(s.customer)+'&lt;/b&gt;'+badge(s)+'&lt;/div&gt;&lt;div class=&quot;stopmeta&quot;&gt;优先级 '+s.priority+(s.deadline?&quot; · &quot;+esc(s.deadline)+&quot;前&quot;:&quot;&quot;)+' · '+counts(s).delivered+&quot;/&quot;+s.pieces.length+' 件&lt;/div&gt;&lt;/div&gt;'}).join(&quot;&quot;)||'&lt;p class=&quot;subtitle&quot;&gt;暂无任务&lt;/p&gt;';
+$(&quot;driverStops&quot;).querySelectorAll(&quot;[data-driver-id]&quot;).forEach(function(el){el.onclick=function(){selectedDriver=el.dataset.driverId;renderDriver()}});
+var s=state.stops.find(function(x){return x.id===selectedDriver&amp;&amp;x.route===driverRoute})||arr[0];
+if(!s){$(&quot;driverDetail&quot;).innerHTML=&quot;&lt;p&gt;暂无客户&lt;/p&gt;&quot;;return}selectedDriver=s.id;$(&quot;driverBadge&quot;).textContent=done(s)?&quot;已完成&quot;:&quot;配送中&quot;;
+var c=counts(s);$(&quot;driverDetail&quot;).innerHTML='&lt;h2 style=&quot;font-size:20px;margin-top:3px&quot;&gt;'+esc(s.customer)+'&lt;/h2&gt;&lt;p class=&quot;subtitle&quot;&gt;路线 '+esc(route(s.route).name)+' · '+c.delivered+&quot;/&quot;+c.all+' 已交付&lt;/p&gt;&lt;div class=&quot;controls&quot; style=&quot;margin:14px 0&quot;&gt;&lt;button class=&quot;primary&quot; id=&quot;goNav&quot;&gt;▶ 开始导航&lt;/button&gt;&lt;button class=&quot;btn&quot; id=&quot;goScan&quot;&gt;扫码下货&lt;/button&gt;&lt;/div&gt;&lt;div class=&quot;section-title&quot;&gt;本单货物&lt;/div&gt;'+s.pieces.map(function(p){return '&lt;div class=&quot;item-row&quot;&gt;&lt;div&gt;&lt;b&gt;'+esc(p.name)+'&lt;/b&gt;&lt;div class=&quot;item-desc code&quot;&gt;'+esc(p.id)+'&lt;/div&gt;&lt;/div&gt;&lt;span class=&quot;tag '+(p.state===&quot;delivered&quot;?&quot;green&quot;:p.state===&quot;loaded&quot;?&quot;blue&quot;:&quot;orange&quot;)+'&quot;&gt;'+statusText(p)+'&lt;/span&gt;&lt;/div&gt;'}).join(&quot;&quot;)+'&lt;div class=&quot;notice&quot;&gt;只有实际完成下货扫码，才能自动更新件数；尚未装车的加单会显示待装车。&lt;/div&gt;&lt;button class=&quot;ghost compact&quot; id=&quot;finishStop&quot;&gt;检查本单是否已完成&lt;/button&gt;';
+$(&quot;goNav&quot;).onclick=function(){navTo(s)};$(&quot;goScan&quot;).onclick=function(){scanRoute=s.route;$(&quot;scanRoute&quot;).value=s.route;state.mode=&quot;deliver&quot;;goPage(&quot;scan&quot;)};$(&quot;finishStop&quot;).onclick=function(){flash(done(s)?&quot;本单全部交付完成&quot;:&quot;尚有 &quot;+(c.all-c.delivered)+&quot; 件未完成下货扫码&quot;)};
+}
+function renderScan(){
+$(&quot;loadMode&quot;).classList.toggle(&quot;on&quot;,state.mode===&quot;load&quot;);$(&quot;deliverMode&quot;).classList.toggle(&quot;on&quot;,state.mode===&quot;deliver&quot;);
+var arr=state.stops.filter(function(s){return s.route===labelRoute}),all=[];arr.forEach(function(s){s.pieces.forEach(function(p,i){all.push({p:p,s:s,i:i})})});
+$(&quot;labelCount&quot;).textContent=all.length+&quot; 张&quot;;$(&quot;labelPreview&quot;).innerHTML=all.slice(0,24).map(function(o){
+return '&lt;div class=&quot;sticker&quot;&gt;&lt;div style=&quot;min-width:0;overflow:hidden&quot;&gt;&lt;small&gt;JFT FOOD DISTRIBUTION&lt;/small&gt;&lt;div class=&quot;name&quot;&gt;'+esc(o.s.customer)+'&lt;/div&gt;&lt;div class=&quot;item&quot;&gt;'+esc(o.p.name)+'&lt;/div&gt;&lt;div class=&quot;piece&quot;&gt;'+(o.i+1)+&quot;/&quot;+o.s.pieces.length+'&lt;/div&gt;&lt;small&gt;'+esc(o.p.qty)+' · '+esc(o.s.route)+'&lt;/small&gt;&lt;/div&gt;&lt;div class=&quot;qr&quot; data-code=&quot;'+esc(o.p.id)+'&quot;&gt;&lt;/div&gt;&lt;/div&gt;'
+}).join(&quot;&quot;)+(all.length&gt;24?'&lt;p class=&quot;subtitle&quot;&gt;预览前24张；打印包含全部。&lt;/p&gt;':&quot;&quot;);
+drawQr($(&quot;labelPreview&quot;));
+$(&quot;scanHistory&quot;).innerHTML=scanHistory.slice(0,8).map(function(e){return '&lt;div class=&quot;log&quot;&gt;'+esc(e)+'&lt;/div&gt;'}).join(&quot;&quot;);
+}
+function drawQr(root){if(!window.QRCode)return;root.querySelectorAll(&quot;.qr[data-code]&quot;).forEach(function(el){try{new QRCode(el,{text:el.getAttribute(&quot;data-code&quot;),width:80,height:80,correctLevel:QRCode.CorrectLevel.M})}catch(e){el.textContent=el.getAttribute(&quot;data-code&quot;)}})}
+function commitScan(value){
+var id=String(value||&quot;&quot;).trim().toUpperCase();if(!id){flash(&quot;请先输入或扫描标签编号&quot;);return}
+var s=state.stops.find(function(x){return x.pieces.some(function(p){return p.id.toUpperCase()===id})});
+if(!s){flash(&quot;未找到标签：&quot;+id);return}var p=s.pieces.find(function(x){return x.id.toUpperCase()===id});
+if(s.route!==scanRoute){flash(&quot;警告：这件货属于 &quot;+route(s.route).name+&quot;，不是当前路线！&quot;);return}
+if(state.mode===&quot;load&quot;){if(p.state!==&quot;pending&quot;){flash(&quot;重复扫码：这件货已经装车或交付&quot;);return}p.state=&quot;loaded&quot;;note(&quot;扫码上车：&quot;+s.customer+&quot; / &quot;+p.name+&quot; / &quot;+p.id)}
+else {if(p.state===&quot;delivered&quot;){flash(&quot;重复扫码：这件货已经交付&quot;);return}if(p.state!==&quot;loaded&quot;){flash(&quot;未装车！请先确认货物已装车&quot;);return}p.state=&quot;delivered&quot;;note(&quot;扫码下货：&quot;+s.customer+&quot; / &quot;+p.name+&quot; / &quot;+p.id)}
+scanHistory.unshift((state.mode===&quot;load&quot;?&quot;上车 &quot;:&quot;下货 &quot;)+p.id+&quot; · &quot;+s.customer);$(&quot;scanCode&quot;).value=&quot;&quot;;save();flash(&quot;成功：&quot;+s.customer+&quot; · &quot;+statusText(p));renderAll();
+}
+function printLabels(){
+var arr=sorted(labelRoute),list=[];arr.forEach(function(s){s.pieces.forEach(function(p,i){list.push({s:s,p:p,i:i})})});if(!list.length){flash(&quot;该路线没有标签&quot;);return}
+var pages=Math.ceil(list.length/30),html=&quot;&quot;;
+for(var x=0;x&lt;pages;x++){html+='&lt;div class=&quot;print-page&quot;&gt;';for(var i=0;i&lt;30;i++){var o=list[x*30+i];if(!o){html+='&lt;div&gt;&lt;/div&gt;';continue}html+='&lt;div class=&quot;print-label&quot;&gt;&lt;div class=&quot;sticker&quot;&gt;&lt;div style=&quot;min-width:0;overflow:hidden&quot;&gt;&lt;small&gt;JFT FOOD DISTRIBUTION&lt;/small&gt;&lt;div class=&quot;name&quot;&gt;'+esc(o.s.customer)+'&lt;/div&gt;&lt;div class=&quot;item&quot;&gt;'+esc(o.p.name)+'&lt;/div&gt;&lt;div class=&quot;piece&quot;&gt;'+(o.i+1)+&quot;/&quot;+o.s.pieces.length+'&lt;/div&gt;&lt;small&gt;'+esc(o.p.qty)+' · '+esc(o.s.route)+'&lt;/small&gt;&lt;/div&gt;&lt;div class=&quot;qr&quot; data-code=&quot;'+esc(o.p.id)+'&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;'}html+=&quot;&lt;/div&gt;&quot;}$(&quot;printArea&quot;).innerHTML=html;drawQr($(&quot;printArea&quot;));
+if(!window.QRCode){flash(&quot;二维码资源未加载，请联网重试打印&quot;);return}setTimeout(function(){window.print()},180)
+}
+function simulateAdd(){
+var s=state.stops.find(function(x){return x.customer===&quot;Sea Smoke&quot;}),existing=s.pieces.filter(function(p){return p.name===&quot;Green Pepper XXL&quot;}).length;
+for(var i=0;i&lt;2;i++){var n=s.pieces.length+1;s.pieces.push({id:&quot;JFT-&quot;+s.id+&quot;-&quot;+String(n).padStart(3,&quot;0&quot;),name:&quot;Green Pepper XXL&quot;,qty:&quot;1 CS&quot;,state:&quot;pending&quot;})}
+note(&quot;联合出单表模拟加单：Sea Smoke · Green Pepper XXL +2 CS（新标签）&quot;);
+filter=&quot;DT&quot;;scanRoute=&quot;DT&quot;;labelRoute=&quot;DT&quot;;selected=s.id;populate();renderAll();flash(&quot;模拟加单成功：2张新标签待装车，原扫码记录保留&quot;);
+}
+function importPaste(){
+var raw=$(&quot;pasteArea&quot;).value.trim();if(!raw){flash(&quot;请先粘贴表格内容&quot;);return}
+var rows=raw.replace(/\r/g,&quot;&quot;).split(&quot;\n&quot;).map(function(line){return line.split(&quot;\t&quot;)}),last=&quot;&quot;,parsed=0,added=0;
+rows.forEach(function(r){if(r.length&lt;5)return;var first=String(r[0]||&quot;&quot;).trim(),c=String(r[1]||&quot;&quot;).trim(),name=String(r[2]||&quot;&quot;).trim(),qty=String(r[4]||&quot;&quot;).trim();
+if(/^(序号|route)/i.test(first)||name===&quot;产品名称&quot;||!name)return;
+if(c&amp;&amp;!/^(商家名称|null)$/i.test(c))last=c;if(!last)return;
+var m=qty.match(/(\d+)\s*(cs|case|bags?|箱|袋)/i);var n=m?Math.max(1,Math.min(100,Number(m[1]))):1;if(/缺货|out of stock/i.test(qty+&quot; &quot;+r[3]))return;
+parsed++;var s=state.stops.find(function(x){return x.route===importRoute&amp;&amp;x.customer.trim().toLowerCase()===last.toLowerCase()});
+if(!s){var sid=&quot;S&quot;+Date.now().toString(36)+String(Math.floor(Math.random()*100));s={id:sid,route:importRoute,customer:last,lat:44.65+Math.random()*.03,lon:-63.59-Math.random()*.025,priority:3,deadline:&quot;&quot;,order:sorted(importRoute).length+1,pieces:[]};state.stops.push(s);note(&quot;新客户：&quot;+last+&quot;（位置为演示点位，请核对）&quot;)}
+var current=s.pieces.filter(function(p){return p.name===name}).length;var howMany=Math.max(0,n-current);
+for(var i=0;i&lt;howMany;i++){var next=s.pieces.length+1;s.pieces.push({id:&quot;JFT-&quot;+s.id+&quot;-&quot;+String(next).padStart(3,&quot;0&quot;),name:name,qty:&quot;1 CS&quot;,state:&quot;pending&quot;})}added+=howMany;
+});
+if(!parsed){flash(&quot;未识别商品行。请粘贴7列格式的订单区域&quot;);return}
+note(&quot;手动同步 &quot;+parsed+&quot; 行，新增 &quot;+added+&quot; 件；已有扫码状态保留&quot;);filter=importRoute;labelRoute=importRoute;scanRoute=importRoute;populate();renderAll();flash(&quot;同步完成：&quot;+parsed+&quot;项商品，新增 &quot;+added+&quot;张标签&quot;);
+}
+function haversine(a,b){var x=(a.lat-b.lat)*111,y=(a.lon-b.lon)*80;return Math.sqrt(x*x+y*y)}
+function optimize(){
+var ids=filter===&quot;all&quot;?ROUTES.map(function(r){return r.id}):[filter];
+ids.forEach(function(id){var arr=sorted(id),fixed=arr.filter(done),remaining=arr.filter(function(s){return !done(s)}),cur={lat:44.69724,lon:-63.6615},order=fixed.length;
+fixed.forEach(function(s,i){s.order=i+1});while(remaining.length){remaining.sort(function(a,b){var pa=a.priority*100+(a.deadline?parseInt(a.deadline):24),pb=b.priority*100+(b.deadline?parseInt(b.deadline):24);return pa-pb||haversine(cur,a)-haversine(cur,b)});var best=remaining.shift();best.order=++order;cur=best}
+});note(&quot;办公室执行基础优先级排序（未调用真实道路优化API）&quot;);renderAll();flash(&quot;已根据优先级重排；地图为示意直线，不是道路最短路线&quot;);
+}
+function renderEvents(){$(&quot;eventLog&quot;).innerHTML=state.events.map(function(e){return '&lt;div class=&quot;log&quot;&gt;'+esc(e.msg)+'&lt;br&gt;&lt;small&gt;'+esc(e.time)+'&lt;/small&gt;&lt;/div&gt;'}).join(&quot;&quot;)}
+function renderAll(){renderStats();renderStops();renderDetail();renderMap();renderDriver();renderScan();renderEvents()}
+function goPage(pg){currentPage=pg;document.querySelectorAll(&quot;nav button&quot;).forEach(function(b){b.classList.toggle(&quot;active&quot;,b.dataset.page===pg)});document.querySelectorAll(&quot;.page&quot;).forEach(function(p){p.classList.toggle(&quot;active&quot;,p.id===pg)});if(pg===&quot;dispatch&quot;)setTimeout(function(){renderMap()},100);if(pg===&quot;driver&quot;)renderDriver();if(pg===&quot;scan&quot;)renderScan();window.scrollTo({top:0,behavior:&quot;smooth&quot;})}
+document.querySelectorAll(&quot;nav button&quot;).forEach(function(b){b.onclick=function(){goPage(b.dataset.page)}});
+$(&quot;routeFilter&quot;).onchange=function(){filter=this.value;renderAll();if(map){var arr=sorted(filter),pts=arr.map(function(s){return [s.lat,s.lon]});if(pts.length)map.fitBounds(pts,{padding:[45,45],maxZoom:12})}};
+$(&quot;driverRoute&quot;).onchange=function(){driverRoute=this.value;selectedDriver=sorted(driverRoute)[0]?.id||&quot;&quot;;renderDriver()};
+$(&quot;scanRoute&quot;).onchange=function(){scanRoute=this.value};
+$(&quot;labelRoute&quot;).onchange=function(){labelRoute=this.value;renderScan()};
+$(&quot;importRoute&quot;).onchange=function(){importRoute=this.value};
+$(&quot;simulateBtn&quot;).onclick=simulateAdd;$(&quot;simulateBtn2&quot;).onclick=simulateAdd;$(&quot;optBtn&quot;).onclick=optimize;
+$(&quot;publishBtn&quot;).onclick=function(){state.publishedAt=new Date().toISOString();note(&quot;办公室发布最新配送顺序到演示司机端&quot;);flash(&quot;路线已发布（仅本设备 Demo 内同步）&quot;)};
+$(&quot;loadMode&quot;).onclick=function(){state.mode=&quot;load&quot;;renderScan()};$(&quot;deliverMode&quot;).onclick=function(){state.mode=&quot;deliver&quot;;renderScan()};
+$(&quot;confirmScan&quot;).onclick=function(){commitScan($(&quot;scanCode&quot;).value)};$(&quot;scanCode&quot;).onkeydown=function(e){if(e.key===&quot;Enter&quot;)commitScan($(&quot;scanCode&quot;).value)};
+$(&quot;printBtn&quot;).onclick=printLabels;$(&quot;previewImportBtn&quot;).onclick=importPaste;$(&quot;samplePasteBtn&quot;).onclick=function(){$(&quot;pasteArea&quot;).value=&quot;序号\t商家名称\t产品名称\t规格\t数量\t价格\tSales\n1\tSea Smoke\tGreen Pepper XXL\t10KG\t6 cs\t\t\n\t\tRomaine Hearts\t\t2 bag\t\t\n2\tNew Demo Customer\tCucumber\t\t3 cs\t\t&quot;;flash(&quot;已填入示例表格，点击导入&quot;)};
+$(&quot;resetBtn&quot;).onclick=function(){if(confirm(&quot;确定清空本设备的 Demo 操作并恢复演示数据？&quot;)){state=makeDefault();filter=&quot;all&quot;;scanRoute=&quot;DT&quot;;labelRoute=&quot;DT&quot;;driverRoute=&quot;DT&quot;;selected=&quot;S102&quot;;populate();save();renderAll();flash(&quot;演示数据已重置&quot;)}};
+$(&quot;addStopBtn&quot;).onclick=function(){$(&quot;addModal&quot;).classList.add(&quot;show&quot;);$(&quot;newRoute&quot;).value=filter===&quot;all&quot;?&quot;DT&quot;:filter};
+$(&quot;closeModal&quot;).onclick=function(){$(&quot;addModal&quot;).classList.remove(&quot;show&quot;)};
+$(&quot;saveNewStop&quot;).onclick=function(){var name=$(&quot;newName&quot;).value.trim(),qty=Number($(&quot;newQty&quot;).value),lat=Number($(&quot;newLat&quot;).value),lon=Number($(&quot;newLon&quot;).value),rid=$(&quot;newRoute&quot;).value;if(!name||!Number.isInteger(qty)||qty&lt;1||qty&gt;100||lat&lt;40||lat&gt;49||lon&lt; -69||lon&gt; -58){flash(&quot;请检查客户、数量和Nova Scotia示例坐标&quot;);return}
+var sid=&quot;S&quot;+Date.now().toString(36);state.stops.push({id:sid,route:rid,customer:name,lat:lat,lon:lon,priority:Number($(&quot;newPriority&quot;).value),deadline:$(&quot;newDeadline&quot;).value,order:sorted(rid).length+1,pieces:mkPieces(sid,qty,$(&quot;newItem&quot;).value||&quot;商品&quot;)});selected=sid;filter=rid;$(&quot;addModal&quot;).classList.remove(&quot;show&quot;);note(&quot;新增站点：&quot;+name+&quot;，&quot;+qty+&quot;件待装车&quot;);populate();renderAll();flash(&quot;已加入地图并生成唯一标签&quot;)};
+$(&quot;sendGps&quot;).onclick=function(){if(!navigator.geolocation){flash(&quot;当前浏览器不支持定位&quot;);return}navigator.geolocation.getCurrentPosition(function(pos){state.driverLoc={lat:pos.coords.latitude,lon:pos.coords.longitude,time:new Date().toLocaleTimeString(&quot;zh-CN&quot;)};note(&quot;司机手动上报一次GPS位置&quot;);renderMap();flash(&quot;位置已记录，仅本设备Demo可见&quot;)},function(err){flash(&quot;无法定位，请检查浏览器定位授权：&quot;+err.message)},{enableHighAccuracy:true,timeout:12000})};
+$(&quot;driverRefresh&quot;).onclick=function(){renderDriver();flash(&quot;已刷新&quot;)};
+var detector;
+function stopCamera(){if(scanTimer)clearInterval(scanTimer);scanTimer=null;if(scanStream){scanStream.getTracks().forEach(function(t){t.stop()});scanStream=null}$(&quot;camView&quot;).style.display=&quot;none&quot;;$(&quot;stopCamera&quot;).style.display=&quot;none&quot;;$(&quot;startCamera&quot;).style.display=&quot;inline-block&quot;}
+$(&quot;stopCamera&quot;).onclick=stopCamera;
+$(&quot;startCamera&quot;).onclick=async function(){
+if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){flash(&quot;浏览器不支持摄像头权限，请手动输入&quot;);return}
+if(!(&quot;BarcodeDetector&quot; in window)){flash(&quot;此浏览器不支持原生二维码检测，请手动输入编号&quot;);return}
+try{detector=new BarcodeDetector({formats:[&quot;qr_code&quot;]});scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:&quot;environment&quot;}});$(&quot;camView&quot;).srcObject=scanStream;$(&quot;camView&quot;).style.display=&quot;block&quot;;$(&quot;stopCamera&quot;).style.display=&quot;inline-block&quot;;$(&quot;startCamera&quot;).style.display=&quot;none&quot;;
+scanTimer=setInterval(async function(){if(!$(&quot;camView&quot;).videoWidth)return;try{var codes=await detector.detect($(&quot;camView&quot;));if(codes.length){var val=codes[0].rawValue;stopCamera();commitScan(val)}}catch(e){}},650);
+}catch(e){stopCamera();flash(&quot;无法打开摄像头：&quot;+e.message)}
+};
+populate();renderAll();window.addEventListener(&quot;beforeunload&quot;,stopCamera);
+})();
+&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;" allow="camera; geolocation" style="display:block;position:fixed;inset:0;width:100vw;height:100vh;border:0"></iframe></body></html>
