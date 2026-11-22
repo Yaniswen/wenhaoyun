@@ -277,22 +277,30 @@ function readWeightList(q,spec){
  const a=valid(q),b=valid(spec);
  const context=/(?:称重|weigh|weight|kg|公斤|lb|lbs|磅)/i.test(a+' '+b);
  for(const raw of [a,b]){
-  if(!/[+＋\r\n]/.test(raw) && !(context&&/\d+(?:\.\d+)?\s+\d+(?:\.\d+)?/.test(raw)))continue;
+  if(!/[+＋\r\n]/.test(raw) && !/\d+(?:\.\d+)?\s*[*×xX]\s*\d+/.test(raw) && !(context&&/\d+(?:\.\d+)?\s+\d+(?:\.\d+)?/.test(raw)))continue;
   let text=raw.replace(/＋/g,'+').replace(/（/g,'(').replace(/）/g,')').trim();
   text=text.replace(/^\d+(?:\.\d+)?\s*(?:cases?|cs|bags?|箱|袋)\s*(?:称重|weigh(?:t)?|重量)?\s*[:：]?\s*/i,'').trim();
   text=text.replace(/^(?:称重|weigh(?:t)?|重量)\s*(?:\(\s*(?:kg|lb|公斤|磅)\s*\))?\s*[:：]?\s*/i,'').trim();
   text=text.replace(/^(?:special\s*discount|discount)\s*[:：]?\s*/i,'').trim();
   // A Google Sheets cell can contain several lines, with or without + between lines.
   text=text.replace(/(\d)\s*(kg|kgs|lb|lbs|公斤|磅)(?=\s|[+\r\n]|$)/gi,'$1$2');
+  text=text.replace(/\s*([*×xX])\s*/g,'$1');
   const terms=text.split(/[+\s]+/).filter(Boolean);
-  if(terms.length<2)continue;
-  const parsed=terms.map(term=>term.match(/^(\d+(?:\.\d+)?)(kg|kgs|lb|lbs|公斤|磅)?$/i));
-  if(parsed.some(m=>!m)||(!context&&!parsed.some(m=>m[1].includes('.')||m[2])))continue;
-  const units=parsed.filter(m=>m[2]).map(m=>/^(lb|lbs|磅)/i.test(m[2])?'lb':'kg');
+  if(terms.length<2 && !terms.some(t=>/\d\s*[*×xX]\s*\d/.test(t)))continue;
+  // Weight*cases supports 18.16*10 and mixed entries such as 18.16*10+19.50+20.10.
+  const parsed=terms.map(term=>term.match(/^(\d+(?:\.\d+)?)(kg|kgs|lb|lbs|公斤|磅)?(?:[*×xX](\d{1,3})(kg|kgs|lb|lbs|公斤|磅)?)?$/i));
+  if(parsed.some(m=>!m)||(!context&&!parsed.some(m=>m[1].includes('.')||m[2]||m[4])))continue;
+  if(parsed.some(m=>m[3]&&(!Number.isInteger(Number(m[3]))||Number(m[3])<1||Number(m[3])>500)))return {values:[],error:'重量乘数必须为1至500箱'};
+  const units=parsed.flatMap(m=>[m[2],m[4]].filter(Boolean)).map(v=>/^(lb|lbs|磅)/i.test(v)?'lb':'kg');
   if(new Set(units).size>1)return {values:[],error:'重量列表混用了 kg 和 lb，请统一单位'};
-  // JFT's numeric case-weight lists default to kg unless the pasted record says lb.
   const unit=units[0]||(/\b(?:lb|lbs)\b|磅/i.test(a+' '+b)?'lb':'kg');
-  return {values:parsed.map(m=>m[1]+' '+unit),error:null};
+  const values=[];
+  for(const m of parsed){
+   const count=m[3]?Number(m[3]):1;
+   if(values.length+count>500)return {values:[],error:'重量列表超过500箱，请分批打印'};
+   for(let i=0;i<count;i++)values.push(m[1]+' '+unit);
+  }
+  return {values,error:null};
  }
  return {values:[],error:null};
 }
@@ -329,7 +337,7 @@ function pieces(q,spec,name){
  const a=valid(q),b=valid(spec),item=valid(name);
  const parseUnits=s=>{const m=s.match(/(?:^|[^\d.])(\d+(?:\.\d+)?)\s*(cases?|cs|bags?|btls?|bottles?|箱|袋|瓶)(?![a-z])/i);return m?{number:Number(m[1]),unit:/^(bag|袋)/i.test(m[2])?'bag':/^(btl|bottle|瓶)/i.test(m[2])?'btl':'cs'}:null};
  let matched=parseUnits(a);
- if(!matched&&(!a||/(?:kg|lb|称重|缺货|weigh)/i.test(a)||/(?:称重|weigh)/i.test(b)))matched=parseUnits(b);
+ if(!matched&&(!a||/(?:kg|lb|称重|缺货|weigh)/i.test(a)||/(?:称重|weigh)/i.test(b)||/\d\s*[*×xX+]\s*\d/.test(a)))matched=parseUnits(b);
  const list=readWeightList(a,b);
  const count=matched&&Number.isInteger(matched.number)&&matched.number>0&&matched.number<=500?matched.number:list.values.length>1?list.values.length:1;
  const fixed=standardWeight(item,b);
